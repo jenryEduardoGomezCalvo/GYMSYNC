@@ -2,8 +2,11 @@ package com.AppexSolutions.gymsync.features.auth.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.AppexSolutions.gymsync.features.auth.domain.entities.AuthSession
+import com.AppexSolutions.gymsync.features.auth.domain.entities.FAuthSession
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.PostUserUseCase
 import com.AppexSolutions.gymsync.features.auth.presentation.screens.LoginUiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -27,6 +30,13 @@ class GymViewModel(
 
     // Estado público (inmutable) - la UI solo puede leerlo
     val uiState = _uiState.asStateFlow()
+
+    // ✅ CREDENCIALES HARDCODEADAS TEMPORALES
+    companion object {
+        private const val HARDCODED_EMAIL = "admin@gymsync.com"
+        private const val HARDCODED_PASSWORD = "123456"
+        private const val USE_HARDCODED_LOGIN = true  // ✅ Cambiar a false cuando tengas la API
+    }
 
     /**
      * Actualiza el email mientras el usuario escribe
@@ -92,10 +102,71 @@ class GymViewModel(
             )
         }
 
+        // ✅ MODO TEMPORAL: Login con credenciales hardcodeadas
+        if (USE_HARDCODED_LOGIN) {
+            loginWithHardcodedCredentials(currentEmail, currentPassword)
+        } else {
+            // 🔒 MODO REAL: Login con API (comentado temporalmente)
+            loginWithApi(currentEmail, currentPassword)
+        }
+    }
 
-        // Llamada asíncrona al caso de uso
+    /**
+     * ✅ LOGIN TEMPORAL CON CREDENCIALES HARDCODEADAS
+     *
+     * Credenciales válidas:
+     * Email: admin@gymsync.com
+     * Password: 123456
+     */
+    private fun loginWithHardcodedCredentials(email: String, password: String) {
         viewModelScope.launch {
-            val result = postUserUseCase(currentEmail, currentPassword)
+            // Simular delay de red
+            delay(1500)
+
+            // Verificar credenciales
+            if (email == HARDCODED_EMAIL && password == HARDCODED_PASSWORD) {
+                // ✅ Login exitoso
+                val fakeAuthSession = FAuthSession(
+                    token = "fake_token_12345",
+                    userId = 1,
+                    email = email,
+                    name = "Administrador",
+                    expiresAt = System.currentTimeMillis() + 86400000 // 24 horas
+                )
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        authSession = null,
+                        isLoginSuccessful = true,
+                        error = null
+                    )
+                }
+            } else {
+                // ❌ Credenciales incorrectas
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        authSession = null,
+                        isLoginSuccessful = false,
+                        error = "Credenciales incorrectas. Usa:\nEmail: admin@gymsync.com\nPassword: 123456"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 🔒 LOGIN REAL CON API
+     *
+     * Este método se usará cuando tengas la API desplegada.
+     * Por ahora está comentado y se usa loginWithHardcodedCredentials()
+     */
+    private fun loginWithApi(email: String, password: String) {
+        // TODO: Descomentar cuando tengas la API lista
+        /*
+        viewModelScope.launch {
+            val result = postUserUseCase(email, password)
 
             _uiState.update { currentState ->
                 result.fold(
@@ -118,6 +189,10 @@ class GymViewModel(
                 )
             }
         }
+        */
+
+        // Mientras tanto, usar el login hardcodeado
+        loginWithHardcodedCredentials(email, password)
     }
 
     /**
