@@ -4,6 +4,8 @@ import android.content.Context
 import com.AppexSolutions.gymsync.core.network.GymSyncAPI
 import com.AppexSolutions.gymsync.features.auth.data.repositories.GymRepositoriesImp
 import com.AppexSolutions.gymsync.features.auth.domain.repositories.GymSyncRepositorie
+import com.AppexSolutions.gymsync.features.clients.data.repositories.ClientsRepoImplements
+import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRepository
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -25,6 +27,10 @@ class appContainer(
 
     val GymRepositories : GymSyncRepositorie by lazy {
         GymRepositoriesImp(gymApis)
+    }
+
+    val ClientRepositorie : ClientRepository by lazy {
+        ClientsRepoImplements(gymApis)
     }
 
 }

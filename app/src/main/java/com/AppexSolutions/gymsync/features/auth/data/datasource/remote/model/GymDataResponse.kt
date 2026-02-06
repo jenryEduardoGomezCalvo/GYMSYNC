@@ -1,3 +1,4 @@
+
 package com.AppexSolutions.gymsync.features.auth.data.datasource.remote.model
 
 data class GymDataResponse(
