@@ -2,32 +2,27 @@ package com.AppexSolutions.gymsync.features.clients.data.datasource.remote.model
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Respuesta de la API para un cliente
- *
- * Representa el JSON que viene del backend
- */
-data class ClientResponse(
-    @SerializedName("id")
-    val id: Int?,
+data class ClientsListResponse(
+    @SerializedName("success")
+    val success: Boolean,
 
-    @SerializedName("nombre")
-    val nombre: String,
+    @SerializedName("message")
+    val message: String,
 
-    @SerializedName("status")
-    val status: String,
-
-    @SerializedName("plan")
-    val plan: String,
-
-    @SerializedName("avatar_url")
-    val avatarUrl: String? = null
+    @SerializedName("data")
+    val data: List<ClientDto>
 )
 
-/**
- * Respuesta de la API con lista de clientes
- */
-data class ClientsListResponse(
-    @SerializedName("data")
-    val data: List<ClientResponse>
+data class ClientDto(
+    @SerializedName("id")
+    val id: Int,
+
+    @SerializedName("nombres")
+    val nombres: String,
+
+    @SerializedName("apellidos")
+    val apellidos: String,
+
+    @SerializedName("activo")
+    val activo: Boolean
 )

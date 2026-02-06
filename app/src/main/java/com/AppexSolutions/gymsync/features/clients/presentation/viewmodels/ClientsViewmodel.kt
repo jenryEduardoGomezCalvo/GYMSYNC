@@ -1,18 +1,20 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
-import com.AppexSolutions.gymsync.features.clients.domain.entities.ClientStatus
-import com.AppexSolutions.gymsync.features.clients.domain.entities.MembershipType
+import androidx.lifecycle.viewModelScope
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientsUsecase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para la pantalla de Clientes
  */
-class ClientsViewModel : ViewModel() {
+class ClientsViewModel(
+    private val getClientsUsecase: GetClientsUsecase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClientsUiState())
     val uiState = _uiState.asStateFlow()
@@ -22,64 +24,54 @@ class ClientsViewModel : ViewModel() {
     }
 
     /**
-     * Carga los clientes (hardcodeados por ahora)
+     * Carga los clientes desde la API
      */
     private fun loadClients() {
-        val hardcodedClients = listOf(
-            Client(
-                id = 1,
-                name = "Sofía Martínez",
-                membershipType = MembershipType.PREMIUM,
-                status = ClientStatus.ACTIVO
-            ),
-            Client(
-                id = 2,
-                name = "Carlos Ruiz",
-                membershipType = MembershipType.BASICA,
-                status = ClientStatus.ACTIVO
-            ),
-            Client(
-                id = 3,
-                name = "Ana Gómez",
-                membershipType = MembershipType.PREMIUM,
-                status = ClientStatus.INACTIVO
-            ),
-            Client(
-                id = 4,
-                name = "Miguel Ángel",
-                membershipType = MembershipType.ESTANDAR,
-                status = ClientStatus.ACTIVO
-            ),
-            Client(
-                id = 5,
-                name = "Lucía Fernández",
-                membershipType = MembershipType.PREMIUM,
-                status = ClientStatus.ACTIVO
-            )
-        )
+        viewModelScope.launch {
+            // Activar estado de carga
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
-        _uiState.update {
-            it.copy(
-                clients = hardcodedClients,
-                filteredClients = hardcodedClients
-            )
+            // Llamar al caso de uso
+            val result = getClientsUsecase()
+
+            // Actualizar el estado según el resultado
+            _uiState.update { currentState ->
+                result.fold(
+                    onSuccess = { clients ->
+                        currentState.copy(
+                            clients = clients,
+                            filteredClients = clients,
+                            isLoading = false,
+                            error = null
+                        )
+                    },
+                    onFailure = { exception ->
+                        currentState.copy(
+                            clients = emptyList(),
+                            filteredClients = emptyList(),
+                            isLoading = false,
+                            error = exception.message ?: "Error al cargar clientes"
+                        )
+                    }
+                )
+            }
         }
     }
 
     /**
-     * Actualiza la búsqueda
+     * Actualiza la búsqueda mientras el usuario escribe
      */
     fun onSearchQueryChange(query: String) {
-        _uiState.update { currentState ->
+        _uiState.update { state ->
             val filtered = if (query.isBlank()) {
-                currentState.clients
+                state.clients
             } else {
-                currentState.clients.filter { client ->
+                state.clients.filter { client ->
                     client.name.contains(query, ignoreCase = true)
                 }
             }
 
-            currentState.copy(
+            state.copy(
                 searchQuery = query,
                 filteredClients = filtered
             )
@@ -96,5 +88,12 @@ class ClientsViewModel : ViewModel() {
                 filteredClients = it.clients
             )
         }
+    }
+
+    /**
+     * Recarga los clientes (útil para pull-to-refresh)
+     */
+    fun refresh() {
+        loadClients()
     }
 }

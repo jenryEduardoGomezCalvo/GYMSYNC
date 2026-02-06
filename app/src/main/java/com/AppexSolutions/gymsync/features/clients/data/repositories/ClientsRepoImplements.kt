@@ -8,9 +8,10 @@ import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRep
 class ClientsRepoImplements(
     private val gymApi: GymSyncAPI
 ): ClientRepository{
-    override suspend fun GetClients(): Client {
-        val response = gymApi.GetAllMembers()
-        return response.toDomain()
+    override suspend fun GetClients(): List<Client> {
+        return gymApi.GetAllMembers()
+            .data
+            .map { it.toDomain() }
     }
 
 }

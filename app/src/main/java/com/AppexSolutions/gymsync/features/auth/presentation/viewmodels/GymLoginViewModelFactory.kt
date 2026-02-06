@@ -4,11 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.PostUserUseCase
 
-/**
- * Factory para crear GymViewModel con dependencias
- *
- * Necesario porque el ViewModel requiere un parámetro (PostUserUseCase)
- */
+
 class GymLoginViewModelFactory(
     private val postUserUseCase: PostUserUseCase
 ) : ViewModelProvider.Factory {

@@ -7,8 +7,8 @@ import com.AppexSolutions.gymsync.features.auth.domain.entities.User
 
 fun GymDataResponse.toDomain(): AuthSession{
     return AuthSession(
-        token = this.token,
-        id_user = this.id_user
+        token = this.data.token,
+        id_user = this.data.user.id
     )
 }
 

@@ -1,6 +1,5 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,7 +30,7 @@ import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.Clien
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(
-    factory: ClientsViewModelFactory = ClientsViewModelFactory(),
+    factory: ClientsViewModelFactory,  // ✅ REQUERIDO: Ahora sí necesita el factory con el UseCase
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
     onTabSelected: (Int) -> Unit = {}
@@ -41,7 +40,6 @@ fun ClientsScreen(
 
     Scaffold(
         topBar = {
-            // Top Bar
             TopAppBar(
                 title = {
                     Text(
@@ -67,12 +65,11 @@ fun ClientsScreen(
         },
         bottomBar = {
             GymBottomNavigationBar(
-                selectedTab = 1,  // Clientes seleccionado
+                selectedTab = 1,
                 onTabSelected = onTabSelected
             )
         },
         floatingActionButton = {
-            // Botón flotante de agregar
             FloatingActionButton(
                 onClick = onAddClient,
                 containerColor = Color(0xFF3B82F6),
@@ -103,26 +100,135 @@ fun ClientsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de clientes
-            if (uiState.filteredClients.isEmpty() && uiState.searchQuery.isNotBlank()) {
-                // Estado vacío de búsqueda
-                EmptySearchState()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(
-                        items = uiState.filteredClients,
-                        key = { it.id }
-                    ) { client ->
-                        ClientListItem(
-                            client = client,
-                            onClick = { onClientClick(client.id) }
-                        )
+            // ✅ Estados de la UI
+            when {
+                // Estado de carga
+                uiState.isLoading -> {
+                    LoadingState()
+                }
+
+                // Estado de error
+                uiState.error != null -> {
+                    ErrorState(
+                        message = uiState.error!!,
+                        onRetry = viewModel::refresh
+                    )
+                }
+
+                // Lista vacía por búsqueda
+                uiState.filteredClients.isEmpty() && uiState.searchQuery.isNotBlank() -> {
+                    EmptySearchState()
+                }
+
+                // Lista vacía sin búsqueda
+                uiState.filteredClients.isEmpty() -> {
+                    EmptyClientsState()
+                }
+
+                // Lista con datos
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(
+                            items = uiState.filteredClients,
+                            key = { it.id }
+                        ) { client ->
+                            ClientListItem(
+                                client = client,
+                                onClick = { onClientClick(client.id) }
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Estado de carga
+ */
+@Composable
+fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            color = Color(0xFF60A5FA)
+        )
+    }
+}
+
+/**
+ * Estado de error con opción de reintentar
+ */
+@Composable
+fun ErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Text(
+                text = "⚠️",
+                fontSize = 64.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = message,
+                color = Color(0xFF9CA3AF),
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF3B82F6)
+                )
+            ) {
+                Text("Reintentar")
+            }
+        }
+    }
+}
+
+/**
+ * Estado cuando no hay clientes
+ */
+@Composable
+fun EmptyClientsState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "👥",
+                fontSize = 64.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "No hay clientes registrados",
+                color = Color(0xFF9CA3AF),
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Presiona + para agregar uno",
+                color = Color(0xFF6B7280),
+                fontSize = 14.sp
+            )
         }
     }
 }
