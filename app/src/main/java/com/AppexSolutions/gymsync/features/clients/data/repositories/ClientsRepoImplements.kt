@@ -14,4 +14,21 @@ class ClientsRepoImplements(
             .map { it.toDomain() }
     }
 
+    override suspend fun GetClientById(clientId: Int): Client {
+        return gymApi.getClientById(clientId)
+            .toDomain()
+
+    }
+
+    override suspend fun updateClient(Client: Client) : Client{
+        return gymApi.updateClient(
+            idClient = Client.id,client=Client
+        )
+
+    }
+
+    override suspend fun deleteClient(clientId: Int) {
+        TODO("Not yet implemented")
+    }
+
 }

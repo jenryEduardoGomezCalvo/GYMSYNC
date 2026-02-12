@@ -30,7 +30,7 @@ import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.Clien
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(
-    factory: ClientsViewModelFactory,  // ✅ REQUERIDO: Ahora sí necesita el factory con el UseCase
+    factory: ClientsViewModelFactory,
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
     onTabSelected: (Int) -> Unit = {}
