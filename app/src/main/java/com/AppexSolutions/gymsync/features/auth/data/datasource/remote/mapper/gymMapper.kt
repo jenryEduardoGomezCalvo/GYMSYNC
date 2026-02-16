@@ -5,10 +5,10 @@ import com.AppexSolutions.gymsync.features.auth.data.datasource.remote.model.Log
 import com.AppexSolutions.gymsync.features.auth.domain.entities.AuthSession
 import com.AppexSolutions.gymsync.features.auth.domain.entities.User
 
-fun GymDataResponse.toDomain(): AuthSession{
+fun GymDataResponse.toDomain(): AuthSession {
     return AuthSession(
-        token = this.data.token,
-        id_user = this.data.user.id
+        token = this.data?.token ?: "",
+        id_user = this.data?.user?.id ?: ""
     )
 }
 

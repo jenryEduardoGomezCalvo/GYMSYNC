@@ -3,11 +3,11 @@ package com.AppexSolutions.gymsync.features.clients.domain.usecases
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRepository
 
-class UpdateClientUseCase(private val repository: ClientRepository) {
+class CreateUserUseCase(private val repository: ClientRepository) {
     suspend operator fun invoke(
-        userId: Int, nombres: String?, apellidos: String?,
-        email: String?, telefono: String?, fechaNacimiento: String?
+        nombres: String, apellidos: String, email: String, password: String,
+        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?
     ): Result<Client> = try {
-        Result.success(repository.updateUser(userId, nombres, apellidos, email, telefono, fechaNacimiento))
+        Result.success(repository.createUser(nombres, apellidos, email, password, telefono, fechaNacimiento, rolId, gymId))
     } catch (e: Exception) { Result.failure(e) }
 }

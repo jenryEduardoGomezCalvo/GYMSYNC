@@ -9,9 +9,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel para la pantalla de Clientes
- */
 class ClientsViewModel(
     private val getClientsUsecase: GetClientsUsecase
 ) : ViewModel() {
@@ -19,38 +16,25 @@ class ClientsViewModel(
     private val _uiState = MutableStateFlow(ClientsUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        loadClients()
-    }
+    init { loadClients() }
 
-    /**
-     * Carga los clientes desde la API
-     */
     private fun loadClients() {
         viewModelScope.launch {
-            // Activar estado de carga
             _uiState.update { it.copy(isLoading = true, error = null) }
-
-            // Llamar al caso de uso
             val result = getClientsUsecase()
-
-            // Actualizar el estado según el resultado
-            _uiState.update { currentState ->
+            _uiState.update { state ->
                 result.fold(
                     onSuccess = { clients ->
-                        currentState.copy(
+                        state.copy(
                             clients = clients,
-                            filteredClients = clients,
-                            isLoading = false,
-                            error = null
+                            filteredClients = filterList(clients, state.searchQuery),
+                            isLoading = false, error = null
                         )
                     },
-                    onFailure = { exception ->
-                        currentState.copy(
-                            clients = emptyList(),
-                            filteredClients = emptyList(),
-                            isLoading = false,
-                            error = exception.message ?: "Error al cargar clientes"
+                    onFailure = { e ->
+                        state.copy(
+                            clients = emptyList(), filteredClients = emptyList(),
+                            isLoading = false, error = e.message ?: "Error al cargar clientes"
                         )
                     }
                 )
@@ -58,42 +42,21 @@ class ClientsViewModel(
         }
     }
 
-    /**
-     * Actualiza la búsqueda mientras el usuario escribe
-     */
     fun onSearchQueryChange(query: String) {
         _uiState.update { state ->
-            val filtered = if (query.isBlank()) {
-                state.clients
-            } else {
-                state.clients.filter { client ->
-                    client.name.contains(query, ignoreCase = true)
-                }
-            }
-
             state.copy(
                 searchQuery = query,
-                filteredClients = filtered
+                filteredClients = filterList(state.clients, query)
             )
         }
     }
 
-    /**
-     * Limpia la búsqueda
-     */
-    fun clearSearch() {
-        _uiState.update {
-            it.copy(
-                searchQuery = "",
-                filteredClients = it.clients
-            )
-        }
-    }
+    private fun filterList(
+        clients: List<com.AppexSolutions.gymsync.features.clients.domain.entities.Client>,
+        query: String
+    ) = if (query.isBlank()) clients
+        else clients.filter { it.nombreCompleto.contains(query, ignoreCase = true) ||
+                it.email.contains(query, ignoreCase = true) }
 
-    /**
-     * Recarga los clientes (útil para pull-to-refresh)
-     */
-    fun refresh() {
-        loadClients()
-    }
+    fun refresh() { loadClients() }
 }

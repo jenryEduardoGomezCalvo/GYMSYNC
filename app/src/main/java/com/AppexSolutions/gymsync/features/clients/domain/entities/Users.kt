@@ -1,29 +1,27 @@
 package com.AppexSolutions.gymsync.features.clients.domain.entities
 
 /**
- * Entidad de Cliente
+ * Entidad de dominio — usuario del sistema
  */
 data class Client(
     val id: Int,
-    val name: String,
-    val membershipType: MembershipType,
-    val status: ClientStatus,
-    val avatarUrl: String = ""  // URL del avatar (vacío por ahora)
-)
-
-/**
- * Tipos de membresía
- */
-enum class MembershipType(val displayName: String) {
-    PREMIUM("Premium"),
-    BASICA("Básica"),
-    ESTANDAR("Estándar")
+    val nombres: String,
+    val apellidos: String,
+    val email: String,
+    val telefono: String?,
+    val fechaNacimiento: String?,
+    val activo: Boolean,
+    val rolId: Int,
+    val rolNombre: String,
+    val gymId: Int?,
+    val gymNombre: String?
+) {
+    val nombreCompleto: String get() = "$nombres $apellidos"
+    val inicial: String get() = nombres.firstOrNull()?.uppercase() ?: "?"
 }
 
-/**
- * Estados del cliente
- */
-enum class ClientStatus(val displayName: String) {
-    ACTIVO("Activo"),
-    INACTIVO("Inactivo")
-}
+/** Rol para los dropdowns */
+data class Rol(val id: Int, val nombre: String, val descripcion: String?)
+
+/** Gym para los dropdowns */
+data class Gym(val id: Int, val nombre: String)

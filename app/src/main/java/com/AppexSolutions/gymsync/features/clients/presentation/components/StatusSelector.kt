@@ -2,6 +2,7 @@ package com.AppexSolutions.gymsync.features.clients.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.RadioButton
@@ -14,98 +15,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.AppexSolutions.gymsync.features.clients.domain.entities.ClientStatus
 
 @Composable
 fun StatusSelector(
-    selectedStatus: ClientStatus,
-    onStatusSelected: (ClientStatus) -> Unit,
+    activo: Boolean,
+    onToggle: () -> Unit,
     label: String = "Estado",
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.White,
+            text = label, fontSize = 14.sp,
+            fontWeight = FontWeight.Medium, color = Color.White,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Botón Activo
-            StatusOption(
-                status = ClientStatus.ACTIVO,
-                isSelected = selectedStatus == ClientStatus.ACTIVO,
-                onClick = { onStatusSelected(ClientStatus.ACTIVO) },
-                modifier = Modifier.weight(1f)
-            )
-
-            // Botón Inactivo
-            StatusOption(
-                status = ClientStatus.INACTIVO,
-                isSelected = selectedStatus == ClientStatus.INACTIVO,
-                onClick = { onStatusSelected(ClientStatus.INACTIVO) },
-                modifier = Modifier.weight(1f)
-            )
+            StatusOption("Activo", activo, Color(0xFF3B82F6), onClick = { if (!activo) onToggle() }, Modifier.weight(1f))
+            StatusOption("Inactivo", !activo, Color(0xFFEF4444), onClick = { if (activo) onToggle() }, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
 private fun StatusOption(
-    status: ClientStatus,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    label: String, isSelected: Boolean, accent: Color,
+    onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
-    val (backgroundColor, borderColor, textColor) = when {
-        isSelected && status == ClientStatus.ACTIVO -> Triple(
-            Color(0xFF1E40AF),
-            Color(0xFF3B82F6),
-            Color(0xFF60A5FA)
-        )
-        isSelected && status == ClientStatus.INACTIVO -> Triple(
-            Color(0xFF7F1D1D),
-            Color(0xFFEF4444),
-            Color(0xFFEF4444)
-        )
-        else -> Triple(
-            Color.Transparent,
-            Color(0xFF2D3748),
-            Color(0xFF9CA3AF)
-        )
-    }
+    val bg = if (isSelected) accent.copy(alpha = 0.15f) else Color.Transparent
+    val border = if (isSelected) accent else Color(0xFF2D3748)
+    val textColor = if (isSelected) accent else Color(0xFF9CA3AF)
 
     Box(
-        modifier = modifier
-            .height(48.dp)
-            .background(backgroundColor, RoundedCornerShape(12.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+        modifier = modifier.height(48.dp)
+            .background(bg, RoundedCornerShape(12.dp))
+            .border(1.dp, border, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             RadioButton(
-                selected = isSelected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = textColor,
-                    unselectedColor = Color(0xFF6B7280)
-                )
+                selected = isSelected, onClick = onClick,
+                colors = RadioButtonDefaults.colors(selectedColor = accent, unselectedColor = Color(0xFF6B7280))
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = status.displayName,
-                color = textColor,
-                fontSize = 14.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-            )
+            Text(text = label, color = textColor, fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
         }
     }
 }

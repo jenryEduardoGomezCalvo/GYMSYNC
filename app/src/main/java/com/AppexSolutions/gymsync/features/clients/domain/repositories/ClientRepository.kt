@@ -1,13 +1,37 @@
 package com.AppexSolutions.gymsync.features.clients.domain.repositories
 
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
+import com.AppexSolutions.gymsync.features.clients.domain.entities.Gym
+import com.AppexSolutions.gymsync.features.clients.domain.entities.Rol
 
 interface ClientRepository {
-    suspend fun GetClients(): List<Client>
-    suspend fun GetClientById(clientId:Int): Client
+    /** Obtiene todos los usuarios con rolId=4 (clientes) */
+    suspend fun getClients(): List<Client>
 
-    suspend fun updateClient(Client: Client): Client
+    /** Obtiene un usuario por ID */
+    suspend fun getUserById(userId: Int): Client
 
-    suspend fun deleteClient(clientId:Int)
+    /** Crea un usuario nuevo (POST /users/) */
+    suspend fun createUser(
+        nombres: String, apellidos: String, email: String, password: String,
+        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?
+    ): Client
+
+    /** Actualiza un usuario (PUT /users/:id) */
+    suspend fun updateUser(
+        userId: Int, nombres: String?, apellidos: String?,
+        email: String?, telefono: String?, fechaNacimiento: String?
+    ): Client
+
+    /** Elimina un usuario (DELETE /users/:id) */
+    suspend fun deleteUser(userId: Int)
+
+    /** Toggle activo/inactivo (PATCH /users/:id/toggle-active) */
+    suspend fun toggleUserActive(userId: Int): Client
+
+    /** Lista de roles (GET /roles/) */
+    suspend fun getRoles(): List<Rol>
+
+    /** Lista de gyms (GET /gyms/) */
+    suspend fun getGyms(): List<Gym>
 }

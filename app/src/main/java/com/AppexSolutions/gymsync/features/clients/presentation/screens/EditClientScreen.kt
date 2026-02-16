@@ -37,7 +37,6 @@ fun EditClientScreen(
     val viewModel: EditClientViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Navegar de vuelta cuando se elimine o guarde
     LaunchedEffect(uiState.successMessage) {
         if (uiState.successMessage != null) {
             kotlinx.coroutines.delay(1500)
@@ -48,221 +47,118 @@ fun EditClientScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Editar Cliente",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
-                },
+                title = { Text("Editar Usuario", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color.White
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0A1628),
-                    titleContentColor = Color.White
+                    containerColor = Color(0xFF0A1628), titleContentColor = Color.White
                 )
             )
         },
         containerColor = Color(0xFF0A1628)
     ) { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        Box(modifier.fillMaxSize().padding(paddingValues)) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color(0xFF60A5FA)
-                )
+                CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color(0xFF60A5FA))
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(24.dp),
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Avatar
                     Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF1E40AF)),
+                        Modifier.size(100.dp).clip(CircleShape).background(Color(0xFF1E40AF)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = Color(0xFF60A5FA),
-                            modifier = Modifier.size(64.dp)
-                        )
+                        Icon(Icons.Default.Person, null, tint = Color(0xFF60A5FA), modifier = Modifier.size(56.dp))
                     }
+                    Spacer(Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    // Campos
+                    ClientTextField(value = uiState.nombres, onValueChange = viewModel::onNombresChange, label = "Nombres")
+                    Spacer(Modifier.height(16.dp))
+                    ClientTextField(value = uiState.apellidos, onValueChange = viewModel::onApellidosChange, label = "Apellidos")
+                    Spacer(Modifier.height(16.dp))
+                    ClientTextField(value = uiState.email, onValueChange = viewModel::onEmailChange, label = "Email")
+                    Spacer(Modifier.height(16.dp))
+                    ClientPhoneField(value = uiState.telefono, onValueChange = viewModel::onTelefonoChange)
+                    Spacer(Modifier.height(16.dp))
+                    DatePickerField(value = uiState.fechaNacimiento, onValueChange = viewModel::onFechaNacimientoChange, label = "Fecha de nacimiento")
+                    Spacer(Modifier.height(16.dp))
 
-                    Text(
-                        text = "Toca para cambiar avatar",
-                        color = Color(0xFF9CA3AF),
-                        fontSize = 12.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Nombre completo
-                    ClientTextField(
-                        value = uiState.name,
-                        onValueChange = viewModel::onNameChange,
-                        label = "Nombre"
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    ClientTextField(
-                        value = uiState.last_name,
-                        onValueChange = viewModel::onNameChange,
-                        label = "apellidos"
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Teléfono
-                    ClientPhoneField(
-                        value = uiState.phone,
-                        onValueChange = viewModel::onPhoneChange
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Fecha de inscripción
-                    DatePickerField(
-                        value = uiState.registrationDate,
-                        onValueChange = viewModel::onRegistrationDateChange
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Estado
+                    // Status toggle (usa PATCH toggle-active)
                     StatusSelector(
-                        selectedStatus = uiState.status,
-                        onStatusSelected = viewModel::onStatusChange
+                        activo = uiState.activo,
+                        onToggle = viewModel::toggleActive
                     )
+                    Spacer(Modifier.height(32.dp))
 
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Botón Guardar
+                    // Guardar
                     Button(
                         onClick = viewModel::saveChanges,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
                         enabled = !uiState.isSaving,
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3B82F6),
-                            contentColor = Color.White
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
                     ) {
                         if (uiState.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
+                            CircularProgressIndicator(Modifier.size(24.dp), Color.White, strokeWidth = 2.dp)
                         } else {
-                            Text(
-                                text = "Guardar cambios",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Text("Guardar cambios", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
+                    Spacer(Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Botón Eliminar
+                    // Eliminar
                     DeleteButton(onClick = viewModel::showDeleteDialog)
-
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(Modifier.height(32.dp))
                 }
             }
 
-            // Diálogo de confirmación de eliminación
+            // Error snackbar
+            if (uiState.error != null) {
+                Snackbar(
+                    Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    containerColor = Color(0xFFEF4444)
+                ) { Text(uiState.error!!, color = Color.White) }
+            }
+
+            // Success snackbar
+            if (uiState.successMessage != null) {
+                Snackbar(
+                    Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                    containerColor = Color(0xFF059669)
+                ) { Text(uiState.successMessage!!, color = Color.White) }
+            }
+
+            // Delete dialog
             if (uiState.showDeleteDialog) {
                 DeleteConfirmationDialog(
                     onConfirm = viewModel::deleteClient,
                     onDismiss = viewModel::hideDeleteDialog
                 )
             }
-
-            // Snackbar de éxito
-            if (uiState.successMessage != null) {
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                    containerColor = Color(0xFF059669)
-                ) {
-                    Text(
-                        text = uiState.successMessage!!,
-                        color = Color.White
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
-fun DeleteConfirmationDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            Text("⚠️", fontSize = 48.sp)
-        },
-        title = {
-            Text(
-                text = "¿Eliminar cliente?",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        },
-        text = {
-            Text(
-                text = "Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este cliente?",
-                textAlign = TextAlign.Center,
-                color = Color(0xFF9CA3AF)
-            )
-        },
+        icon = { Text("⚠️", fontSize = 48.sp) },
+        title = { Text("¿Eliminar usuario?", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
+        text = { Text("Esta acción no se puede deshacer.", textAlign = TextAlign.Center, color = Color(0xFF9CA3AF)) },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFEF4444)
-                )
-            ) {
+            Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))) {
                 Text("Eliminar")
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = Color(0xFF9CA3AF))
-            }
-        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = Color(0xFF9CA3AF)) } },
         containerColor = Color(0xFF1A1F2E),
-        titleContentColor = Color.White,
-        textContentColor = Color(0xFF9CA3AF)
+        titleContentColor = Color.White
     )
 }

@@ -4,16 +4,8 @@ import com.AppexSolutions.gymsync.core.di.appContainer
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.PostUserUseCase
 import com.AppexSolutions.gymsync.features.auth.presentation.viewmodels.GymLoginViewModelFactory
 
-class GymModule(
-    private val appContainer: appContainer
-){
-    private fun providePostUserUseCase(): PostUserUseCase{
-        return PostUserUseCase(appContainer.gymRepositories)
-    }
-
-    fun providerLoginviewModelFactory(): GymLoginViewModelFactory{
-        return GymLoginViewModelFactory(
-            postUserUseCase = providePostUserUseCase()
-        )
-    }
+class GymModule(private val appContainer: appContainer) {
+    fun provideLoginViewModelFactory() = GymLoginViewModelFactory(
+        postUserUseCase = PostUserUseCase(appContainer.gymRepositories)
+    )
 }

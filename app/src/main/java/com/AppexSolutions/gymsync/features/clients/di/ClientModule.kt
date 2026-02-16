@@ -1,64 +1,39 @@
 package com.AppexSolutions.gymsync.features.clients.di
 
 import com.AppexSolutions.gymsync.core.di.appContainer
-import com.AppexSolutions.gymsync.features.clients.data.repositories.ClientsRepoImplements
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.DeleteClientUseCase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientsUsecase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.UpdateClientUseCase
-import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.ClientsViewModelFactory
-import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.EditClientViewModelFactory
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.*
+import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.*
 
-/**
- * Módulo de Clientes
- * Provee todas las dependencias de la feature Clients
- */
-class ClientsModule(
-    private val appContainer: appContainer
-) {
+class ClientsModule(private val appContainer: appContainer) {
 
-    /* ---------------- REPOSITORY ---------------- */
+    /* ── USE CASES ── */
 
-    private fun provideClientsRepository(): ClientsRepoImplements {
-        return ClientsRepoImplements(appContainer.gymApis)
-    }
+    private fun provideGetClientsUsecase() = GetClientsUsecase(appContainer.clientRepository)
+    private fun provideGetClientByIdUseCase() = GetClientByIdUseCase(appContainer.clientRepository)
+    private fun provideUpdateClientUseCase() = UpdateClientUseCase(appContainer.clientRepository)
+    private fun provideDeleteClientUseCase() = DeleteClientUseCase(appContainer.clientRepository)
+    private fun provideToggleUserActiveUseCase() = ToggleUserActiveUseCase(appContainer.clientRepository)
+    private fun provideCreateUserUseCase() = CreateUserUseCase(appContainer.clientRepository)
+    private fun provideGetRolesUseCase() = GetRolesUseCase(appContainer.clientRepository)
+    private fun provideGetGymsUseCase() = GetGymsUseCase(appContainer.clientRepository)
 
-    /* ---------------- USE CASES ---------------- */
+    /* ── FACTORIES ── */
 
-    private fun provideGetClientsUsecase(): GetClientsUsecase {
-        return GetClientsUsecase(provideClientsRepository())
-    }
+    fun provideClientsViewModelFactory() = ClientsViewModelFactory(
+        getClientsUsecase = provideGetClientsUsecase()
+    )
 
-    private fun provideGetClientByIdUseCase(): GetClientByIdUseCase {
-        return GetClientByIdUseCase(provideClientsRepository())
-    }
+    fun provideEditClientViewModelFactory(clientId: Int) = EditClientViewModelFactory(
+        clientId = clientId,
+        getClientByIdUseCase = provideGetClientByIdUseCase(),
+        updateClientUseCase = provideUpdateClientUseCase(),
+        deleteClientUseCase = provideDeleteClientUseCase(),
+        toggleUserActiveUseCase = provideToggleUserActiveUseCase()
+    )
 
-    private fun provideUpdateClientUseCase(): UpdateClientUseCase {
-        return UpdateClientUseCase(provideClientsRepository())
-    }
-
-    private fun provideDeleteClientUseCase(): DeleteClientUseCase {
-        return DeleteClientUseCase(provideClientsRepository())
-    }
-
-    /* ---------------- FACTORIES ---------------- */
-
-    // ✅ Factory para la LISTA de clientes
-    fun provideClientsViewModelFactory(): ClientsViewModelFactory {
-        return ClientsViewModelFactory(
-            getClientsUsecase = provideGetClientsUsecase()
-        )
-    }
-
-    // ✅ Factory para EDITAR cliente
-    fun provideEditClientViewModelFactory(
-        clientId: Int
-    ): EditClientViewModelFactory {
-        return EditClientViewModelFactory(
-            clientId = clientId,
-            getClientByIdUseCase = provideGetClientByIdUseCase(),
-            updateClientUseCase = provideUpdateClientUseCase(),
-            deleteClientUseCase = provideDeleteClientUseCase()
-        )
-    }
+    fun provideCreateUserViewModelFactory() = CreateUserViewModelFactory(
+        createUserUseCase = provideCreateUserUseCase(),
+        getRolesUseCase = provideGetRolesUseCase(),
+        getGymsUseCase = provideGetGymsUseCase()
+    )
 }

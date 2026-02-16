@@ -1,9 +1,18 @@
 package com.AppexSolutions.gymsync.core.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -17,26 +26,20 @@ import com.AppexSolutions.gymsync.features.auth.di.AuthModule
 import com.AppexSolutions.gymsync.features.auth.presentation.screens.LoginScreen
 import com.AppexSolutions.gymsync.features.clients.di.ClientsModule
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsScreen
+import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientScreen
 
-/**
- * Rutas de navegación de la app
- */
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Clients : Screen("clients")
     object Home : Screen("home")
     object Profile : Screen("profile")
-
-    // ✅ Nueva ruta para Editar Cliente
+    object CreateUser : Screen("create_user")
     object EditClient : Screen("edit_client/{clientId}") {
         fun createRoute(clientId: Int) = "edit_client/$clientId"
     }
 }
 
-/**
- * Sistema de navegación de la app
- */
 @Composable
 fun AppNavigation(
     appContainer: appContainer,
@@ -45,11 +48,9 @@ fun AppNavigation(
     val authModule = AuthModule(appContainer)
     val clientsModule = ClientsModule(appContainer)
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Login.route
-    ) {
-        // ✅ Pantalla de Login
+    NavHost(navController = navController, startDestination = Screen.Login.route) {
+
+        // ── Login ──
         composable(Screen.Login.route) {
             LoginScreen(
                 factory = authModule.provideLoginViewModelFactory(),
@@ -61,102 +62,67 @@ fun AppNavigation(
             )
         }
 
-        // ✅ Pantalla de Lista de Clientes
+        // ── Lista de Clientes ──
         composable(Screen.Clients.route) {
             ClientsScreen(
                 factory = clientsModule.provideClientsViewModelFactory(),
                 onAddClient = {
-                    // TODO: Navegar a pantalla de agregar cliente
-                    println("➕ Agregar cliente")
+                    navController.navigate(Screen.CreateUser.route)
                 },
                 onClientClick = { clientId ->
-                    // ✅ Navegar a editar cliente
                     navController.navigate(Screen.EditClient.createRoute(clientId))
                 },
                 onTabSelected = { tabIndex ->
                     when (tabIndex) {
-                        0 -> {
-                            // Navegar a Home
-                            navController.navigate(Screen.Home.route)
-                        }
-                        1 -> {
-                            // Ya estamos en Clientes
-                        }
-                        2 -> {
-                            // Navegar a Perfil
-                            navController.navigate(Screen.Profile.route)
-                        }
+                        0 -> navController.navigate(Screen.Home.route)
+                        1 -> { /* ya estamos */ }
+                        2 -> navController.navigate(Screen.Profile.route)
                     }
                 }
             )
         }
 
-        // ✅ Pantalla de Editar Cliente
+        // ── Crear Usuario (super_admin crea cuentas) ──
+        composable(Screen.CreateUser.route) {
+            CreateUserScreen(
+                factory = clientsModule.provideCreateUserViewModelFactory(),
+                onSuccess = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Editar Cliente/Usuario ──
         composable(
             route = Screen.EditClient.route,
-            arguments = listOf(
-                navArgument("clientId") {
-                    type = NavType.IntType
-                }
-            )
+            arguments = listOf(navArgument("clientId") { type = NavType.IntType })
         ) { backStackEntry ->
             val clientId = backStackEntry.arguments?.getInt("clientId") ?: 0
-
             EditClientScreen(
                 factory = clientsModule.provideEditClientViewModelFactory(clientId),
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // ✅ Pantalla de Home (placeholder)
+        // ── Placeholders ──
         composable(Screen.Home.route) {
-            PlaceholderScreen(
-                title = "🏠 Home",
-                onBack = { navController.popBackStack() }
-            )
+            PlaceholderScreen("🏠 Home") { navController.popBackStack() }
         }
-
-        // ✅ Pantalla de Perfil (placeholder)
         composable(Screen.Profile.route) {
-            PlaceholderScreen(
-                title = "👤 Perfil",
-                onBack = { navController.popBackStack() }
-            )
+            PlaceholderScreen("👤 Perfil") { navController.popBackStack() }
         }
     }
 }
 
-/**
- * Pantalla placeholder para rutas no implementadas
- */
 @Composable
-fun PlaceholderScreen(
-    title: String,
-    onBack: () -> Unit
-) {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier
-            .fillMaxSize()
-            .background(androidx.compose.ui.graphics.Color(0xFF0A1628)),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+fun PlaceholderScreen(title: String, onBack: () -> Unit) {
+    Box(
+        Modifier.fillMaxSize().background(Color(0xFF0A1628)),
+        contentAlignment = Alignment.Center
     ) {
-        androidx.compose.foundation.layout.Column(
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
-        ) {
-            androidx.compose.material3.Text(
-                text = title,
-                color = androidx.compose.ui.graphics.Color.White,
-                fontSize = 32.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
-            androidx.compose.foundation.layout.Spacer(
-                modifier = androidx.compose.ui.Modifier.height(24.dp)
-            )
-            androidx.compose.material3.Button(onClick = onBack) {
-                androidx.compose.material3.Text("Volver")
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(title, color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onBack) { Text("Volver") }
         }
     }
 }
