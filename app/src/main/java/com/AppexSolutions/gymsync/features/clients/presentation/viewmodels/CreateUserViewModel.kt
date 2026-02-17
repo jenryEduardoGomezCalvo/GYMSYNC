@@ -1,7 +1,10 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.AppexSolutions.gymsync.core.util.FormValidator
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.CreateUserUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetGymsUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetRolesUseCase
@@ -10,7 +13,29 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun getCurrentIsoTimestamp(): String {
+    // Genera: 2026-02-16T05:07:53.196Z
+    return ZonedDateTime.now(ZoneOffset.UTC)
+        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatToIsoTimestamp(dateString: String): String? {
+    if (dateString.isBlank()) return null
+    return try {
+        // Asumiendo que dateString viene como "yyyy-MM-dd" desde el input del usuario
+        val localDate = java.time.LocalDate.parse(dateString)
+        localDate.atStartOfDay(ZoneOffset.UTC)
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+    } catch (e: Exception) {
+        null // O manejar error de formato
+    }
+}
 class CreateUserViewModel(
     private val createUserUseCase: CreateUserUseCase,
     private val getRolesUseCase: GetRolesUseCase,
@@ -51,46 +76,47 @@ class CreateUserViewModel(
     fun onRolSelected(rolId: Int) { _uiState.update { it.copy(selectedRolId = rolId) } }
     fun onGymSelected(gymId: Int?) { _uiState.update { it.copy(selectedGymId = gymId) } }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun createUser() {
         val s = _uiState.value
+        if (s.isSaving) return
 
-        // Validaciones
-        if (s.nombres.isBlank() || s.apellidos.isBlank()) {
-            _uiState.update { it.copy(error = "Nombres y apellidos son obligatorios") }; return
+
+        val passwordError = FormValidator.validatePassword(s.password)
+
+        val error = when {
+            s.nombres.isBlank() || s.apellidos.isBlank() -> "Nombres y apellidos obligatorios"
+            !FormValidator.isValidEmail(s.email) -> "Email inválido"
+            passwordError != null -> passwordError
+            s.password != s.confirmPassword -> "Las contraseñas no coinciden"
+            s.selectedRolId == null -> "Selecciona un rol"
+            else -> null
         }
-        if (s.email.isBlank()) {
-            _uiState.update { it.copy(error = "El email es obligatorio") }; return
+
+        if (error != null) {
+            _uiState.update { it.copy(error = error) }
+            return
         }
-        if (s.password.length < 6) {
-            _uiState.update { it.copy(error = "La contraseña debe tener al menos 6 caracteres") }; return
-        }
-        if (!s.password.matches(Regex(".*[A-Z].*")) || !s.password.matches(Regex(".*[a-z].*")) || !s.password.matches(Regex(".*\\d.*"))) {
-            _uiState.update { it.copy(error = "La contraseña debe tener mayúscula, minúscula y número") }; return
-        }
-        if (s.password != s.confirmPassword) {
-            _uiState.update { it.copy(error = "Las contraseñas no coinciden") }; return
-        }
-        if (s.selectedRolId == null) {
-            _uiState.update { it.copy(error = "Selecciona un rol") }; return
+
+        val isoFechaNacimiento = s.fechaNacimiento.takeIf { it.isNotBlank() }?.let {
+            formatToIsoTimestamp(it)
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
-            val result = createUserUseCase(
+            createUserUseCase(
                 nombres = s.nombres,
                 apellidos = s.apellidos,
                 email = s.email,
                 password = s.password,
-                telefono = s.telefono.ifBlank { null },
-                fechaNacimiento = s.fechaNacimiento.ifBlank { null },
-                rolId = s.selectedRolId,
+                telefono = s.telefono.takeIf { it.isNotBlank() }, // ✅ Más limpio que ifBlank
+                fechaNacimiento = isoFechaNacimiento,
+                rolId = s.selectedRolId!!,
                 gymId = s.selectedGymId
-            )
-            _uiState.update { state ->
-                result.fold(
-                    onSuccess = { state.copy(isSaving = false, successMessage = "Usuario creado exitosamente") },
-                    onFailure = { e -> state.copy(isSaving = false, error = e.message ?: "Error al crear usuario") }
-                )
+            ).onSuccess {
+                _uiState.update { it.copy(isSaving = false, successMessage = "Creado con éxito") }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isSaving = false, error = e.message ?: "Error de red") }
             }
         }
     }

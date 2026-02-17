@@ -13,18 +13,18 @@ class AuthInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
+        // Obtenemos el token de forma síncrona para OkHttp
         val token = runBlocking {
             authPreferences.token.firstOrNull()
         }
 
-        val request = if (!token.isNullOrEmpty()) {
-            original.newBuilder()
-                .addHeader("Authorization", "Bearer $token")
-                .build()
-        } else {
-            original
+        val requestBuilder = original.newBuilder()
+            .header("Accept", "application/json")
+
+        if (!token.isNullOrBlank()) {
+            requestBuilder.header("Authorization", "Bearer $token")
         }
 
-        return chain.proceed(request)
+        return chain.proceed(requestBuilder.build())
     }
 }

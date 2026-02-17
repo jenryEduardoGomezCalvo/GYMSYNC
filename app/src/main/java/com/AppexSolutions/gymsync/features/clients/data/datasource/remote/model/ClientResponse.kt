@@ -68,20 +68,26 @@ data class GymsListResponse(
     val data: List<GymDto>
 )
 
-// ── Request para crear usuario: POST /users/ ──
 data class CreateUserRequest(
     val nombres: String,
     val apellidos: String,
     val email: String,
     val password: String,
+
+    @SerializedName("telefono")
     val telefono: String?,
+
+    @SerializedName("fecha_nacimiento")
     val fechaNacimiento: String?,
+
+    @SerializedName("rol_id")
     val rolId: Int,
+
+    @SerializedName("gym_id")
     val gymId: Int?,
     val activo: Boolean = true
 )
 
-// ── Request para actualizar usuario: PUT /users/:id ──
 data class UpdateUserRequest(
     val nombres: String?,
     val apellidos: String?,
