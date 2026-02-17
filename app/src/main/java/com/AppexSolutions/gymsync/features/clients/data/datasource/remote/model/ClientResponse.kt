@@ -30,15 +30,18 @@ data class ClientDto(
     val apellidos: String,
     val email: String,
     val telefono: String?,
-    @SerializedName("fechaNacimiento")
+    @SerializedName("fecha_nacimiento")
     val fechaNacimiento: String?,
     val activo: Boolean,
-    @SerializedName("rolId")
+    @SerializedName("rol_id")
     val rolId: Int,
     val rol: RolDto?,
-    @SerializedName("gymId")
+    @SerializedName("gym_id")
     val gymId: Int?,
-    val gym: GymDto?
+    val gym: GymDto?,
+
+    val createdAt: String?,
+    val updatedAt: String?
 )
 
 data class RolDto(
@@ -52,7 +55,8 @@ data class GymDto(
     val nombre: String,
     val ubicacion: String?,
     val telefono: String?,
-    val email: String?
+    val email: String?,
+    val activo: Boolean? // Agregado
 )
 
 // ── Respuestas para roles y gyms ──
