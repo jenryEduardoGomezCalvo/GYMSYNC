@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,7 +24,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.AppexSolutions.gymsync.core.di.appContainer
-import com.AppexSolutions.gymsync.features.auth.di.AuthModule
 import com.AppexSolutions.gymsync.features.auth.presentation.screens.LoginScreen
 import com.AppexSolutions.gymsync.features.clients.di.ClientsModule
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsScreen
@@ -47,15 +47,14 @@ fun AppNavigation(
     appContainer: appContainer,
     navController: NavHostController = rememberNavController()
 ) {
-    val authModule = remember{AuthModule(appContainer) }
     val clientsModule = remember { ClientsModule(appContainer) }
 
     NavHost(navController = navController, startDestination = Screen.Login.route) {
 
         // ── Login ──
+        // Usa LoginViewModel (Hilt): guarda sesión en Room y soporta biometría.
         composable(Screen.Login.route) {
             LoginScreen(
-                factory = authModule.provideLoginViewModelFactory(),
                 onLoginSuccess = {
                     navController.navigate(Screen.Clients.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -81,6 +80,11 @@ fun AppNavigation(
                         0 -> navController.navigate(Screen.Home.route)
                         1 -> { /* ya estamos */ }
                         2 -> navController.navigate(Screen.Profile.route)
+                    }
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -109,10 +113,10 @@ fun AppNavigation(
 
         // ── Placeholders ──
         composable(Screen.Home.route) {
-            PlaceholderScreen("🏠 Home") { navController.popBackStack() }
+            PlaceholderScreen("Inicio", navController::popBackStack)
         }
         composable(Screen.Profile.route) {
-            PlaceholderScreen("👤 Perfil") { navController.popBackStack() }
+            PlaceholderScreen("Perfil", navController::popBackStack)
         }
     }
 }
@@ -120,13 +124,24 @@ fun AppNavigation(
 @Composable
 fun PlaceholderScreen(title: String, onBack: () -> Unit) {
     Box(
-        Modifier.fillMaxSize().background(Color(0xFF0A1628)),
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Spacer(Modifier.height(24.dp))
-            Button(onClick = onBack) { Text("Volver") }
+            Button(onClick = onBack) {
+                Text(
+                    "Volver",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
     }
 }

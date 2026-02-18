@@ -1,21 +1,18 @@
 package com.AppexSolutions.gymsync.features.auth.presentation.components
 
-
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
- * Botón principal azul
+ * Botón principal moderno y profesional para app fitness
  */
 @Composable
 fun PrimaryButton(
@@ -28,20 +25,24 @@ fun PrimaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(52.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(8.dp), // Menos redondeado, más profesional
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF3B82F6),  // Azul brillante
-            contentColor = Color.White,
-            disabledContainerColor = Color(0xFF374151),
-            disabledContentColor = Color(0xFF6B7280)
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 2.dp,
+            disabledElevation = 0.dp
         )
     ) {
         Text(
             text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.labelLarge
         )
     }
 }

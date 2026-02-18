@@ -10,13 +10,10 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
- * Campo de texto para Email
+ * Campo de texto moderno para Email - diseño profesional
  */
 @Composable
 fun LoginTextField(
@@ -25,50 +22,50 @@ fun LoginTextField(
     label: String,
     placeholder: String,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true  // ✅ AÑADE ESTE PARÁMETRO
+    enabled: Boolean = true
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Label
+        // Label con estilo del tema
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.White
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // TextField
+        // TextField con diseño moderno
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,  // ✅ USA EL PARÁMETRO AQUÍ
+            enabled = enabled,
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = Color(0xFF6B7280)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Email icon",
-                    tint = Color(0xFF9CA3AF)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(8.dp), // Menos redondeado
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                disabledTextColor = Color(0xFF6B7280),  // ✅ Color cuando está deshabilitado
-                focusedContainerColor = Color(0xFF1F2937),
-                unfocusedContainerColor = Color(0xFF1F2937),
-                disabledContainerColor = Color(0xFF1F2937),  // ✅ Background cuando está deshabilitado
-                focusedBorderColor = Color(0xFF3B82F6),
-                unfocusedBorderColor = Color(0xFF374151),
-                disabledBorderColor = Color(0xFF374151),  // ✅ Borde cuando está deshabilitado
-                cursorColor = Color(0xFF60A5FA)
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                cursorColor = MaterialTheme.colorScheme.primary
             ),
             singleLine = true
         )

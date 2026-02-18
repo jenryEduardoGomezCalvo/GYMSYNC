@@ -37,4 +37,7 @@ interface UserDao {
 
     @Query("SELECT COUNT(*) FROM users WHERE biometric_enabled = 1")
     suspend fun countBiometricUsers(): Int
+
+    @Query("UPDATE users SET token = ''")
+    suspend fun clearAllTokens()
 }

@@ -6,16 +6,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Barra de búsqueda para clientes
+ * Barra de búsqueda moderna para clientes
  */
 @Composable
 fun ClientSearchBar(
@@ -32,25 +32,26 @@ fun ClientSearchBar(
         placeholder = {
             Text(
                 text = "Buscar cliente...",
-                color = Color(0xFF6B7280)
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Buscar",
-                tint = Color(0xFF6B7280)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(8.dp), // Menos redondeado
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedContainerColor = Color(0xFF1A1F2E),
-            unfocusedContainerColor = Color(0xFF1A1F2E),
-            focusedBorderColor = Color(0xFF2D3748),
-            unfocusedBorderColor = Color(0xFF2D3748),
-            cursorColor = Color(0xFF60A5FA)
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            cursorColor = MaterialTheme.colorScheme.primary
         ),
         singleLine = true
     )

@@ -85,4 +85,9 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun hasBiometricSession(): Boolean {
         return userDao.countBiometricUsers() > 0
     }
+
+    override suspend fun logout() {
+        userDao.clearAllTokens()
+        authPreferences.clearToken()
+    }
 }

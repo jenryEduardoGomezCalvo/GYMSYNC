@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.AppexSolutions.gymsync.features.auth.domain.entities.AuthSession
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.BiometricLoginResult
+import com.AppexSolutions.gymsync.features.auth.data.datasource.hardware.BiometricAuthManager
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.EnableBiometricUseCase
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.HasBiometricSessionUseCase
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.LoginUseCase
@@ -24,7 +25,9 @@ data class LoginBiometricUiState(
     val authSession: AuthSession? = null,
     val isLoginSuccessful: Boolean = false,
     val showBiometricButton: Boolean = false,
-    val biometricLoginInProgress: Boolean = false
+    val biometricLoginInProgress: Boolean = false,
+    val showEnableBiometricDialog: Boolean = false,
+    val lastLoggedEmail: String = ""
 )
 
 @HiltViewModel
@@ -32,7 +35,8 @@ class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val loginWithBiometricUseCase: LoginWithBiometricUseCase,
     private val enableBiometricUseCase: EnableBiometricUseCase,
-    private val hasBiometricSessionUseCase: HasBiometricSessionUseCase
+    private val hasBiometricSessionUseCase: HasBiometricSessionUseCase,
+    private val biometricAuthManager: BiometricAuthManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginBiometricUiState())
@@ -63,14 +67,19 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             loginUseCase(email, password).fold(
                 onSuccess = { session ->
+                    val canOfferBiometric = biometricAuthManager.isHardwareAvailable() &&
+                            biometricAuthManager.isBiometricEnrolled() &&
+                            !hasBiometricSessionUseCase()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             authSession = session,
-                            isLoginSuccessful = true
+                            lastLoggedEmail = email,
+                            showEnableBiometricDialog = canOfferBiometric,
+                            isLoginSuccessful = !canOfferBiometric
                         )
                     }
-                    checkBiometricAvailability()
+                    if (!canOfferBiometric) checkBiometricAvailability()
                 },
                 onFailure = { e ->
                     _uiState.update {
@@ -133,6 +142,25 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             enableBiometricUseCase(email, enable)
             checkBiometricAvailability()
+        }
+    }
+
+    /** El usuario acepta activar biometría → guarda en Room y navega. */
+    fun confirmEnableBiometric() {
+        val email = _uiState.value.lastLoggedEmail
+        viewModelScope.launch {
+            enableBiometricUseCase(email, true)
+            _uiState.update {
+                it.copy(showEnableBiometricDialog = false, isLoginSuccessful = true)
+            }
+            checkBiometricAvailability()
+        }
+    }
+
+    /** El usuario rechaza activar biometría → navega sin guardar biometría. */
+    fun skipEnableBiometric() {
+        _uiState.update {
+            it.copy(showEnableBiometricDialog = false, isLoginSuccessful = true)
         }
     }
 

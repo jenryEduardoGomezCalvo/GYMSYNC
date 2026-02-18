@@ -7,19 +7,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.AppexSolutions.gymsync.features.auth.presentation.viewmodels.LogoutViewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientListItem
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientSearchBar
 import com.AppexSolutions.gymsync.features.clients.presentation.components.GymBottomNavigationBar
@@ -30,18 +31,52 @@ import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.Clien
 @Composable
 fun ClientsScreen(
     factory: ClientsViewModelFactory,
-    shouldRefresh: Boolean = false,  // <-- agregar
+    shouldRefresh: Boolean = false,
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
-    onTabSelected: (Int) -> Unit = {}
+    onTabSelected: (Int) -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val viewModel: ClientsViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val logoutViewModel: LogoutViewModel = hiltViewModel()
+    val loggedOut by logoutViewModel.loggedOut.collectAsStateWithLifecycle()
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(loggedOut) {
+        if (loggedOut) onLogout()
+    }
 
     // Cuando shouldRefresh cambia a true (al regresar de Editar), recarga la lista
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh) viewModel.refresh()
     }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar sesión", fontWeight = FontWeight.Bold) },
+            text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    logoutViewModel.logout()
+                }) {
+                    Text("Cerrar sesión", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar", color = Color(0xFF9CA3AF))
+                }
+            },
+            containerColor = Color(0xFF1F2937),
+            titleContentColor = Color.White,
+            textContentColor = Color(0xFF9CA3AF)
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,6 +84,9 @@ fun ClientsScreen(
                 actions = {
                     IconButton(onClick = {}) {
                         Icon(Icons.Default.FilterList, "Filtrar", tint = Color.White)
+                    }
+                    IconButton(onClick = { showLogoutDialog = true }) {
+                        Icon(Icons.Default.ExitToApp, "Cerrar sesión", tint = Color(0xFFEF4444))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
