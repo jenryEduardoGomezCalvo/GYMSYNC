@@ -62,7 +62,8 @@ dependencies {
     implementation(libs.com.squareup.retrofit2.retrofit)        // Retrofit
     implementation(libs.com.squareup.retrofit2.converter.json)  // JSON
     implementation(libs.io.coil.kt.coil.compose)
-    implementation(libs.androidx.ui)                // IO
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.navigation.common.ktx)                // IO
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

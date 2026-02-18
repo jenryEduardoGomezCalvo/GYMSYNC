@@ -37,9 +37,8 @@ fun EditClientScreen(
     val viewModel: EditClientViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.successMessage) {
-        if (uiState.successMessage != null) {
-            kotlinx.coroutines.delay(1500)
+    LaunchedEffect(uiState.navigateBack) {
+        if (uiState.navigateBack) {
             onNavigateBack()
         }
     }

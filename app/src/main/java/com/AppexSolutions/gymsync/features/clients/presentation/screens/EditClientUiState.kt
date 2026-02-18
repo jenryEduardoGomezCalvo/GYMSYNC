@@ -14,5 +14,6 @@ data class EditClientUiState(
     val isSaving: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
-    val showDeleteDialog: Boolean = false
+    val showDeleteDialog: Boolean = false,
+    val navigateBack: Boolean = false
 )

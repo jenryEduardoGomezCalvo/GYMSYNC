@@ -97,6 +97,7 @@ data class UpdateUserRequest(
     val apellidos: String?,
     val email: String?,
     val telefono: String?,
+    @SerializedName("fecha_nacimiento")  // <-- agregar esta línea
     val fechaNacimiento: String?,
     val activo: Boolean?
 )

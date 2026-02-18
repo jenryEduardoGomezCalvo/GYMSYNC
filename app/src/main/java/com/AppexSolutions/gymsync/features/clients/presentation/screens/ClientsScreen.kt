@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,7 @@ import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.Clien
 @Composable
 fun ClientsScreen(
     factory: ClientsViewModelFactory,
+    shouldRefresh: Boolean = false,  // <-- agregar
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
     onTabSelected: (Int) -> Unit = {}
@@ -35,6 +38,10 @@ fun ClientsScreen(
     val viewModel: ClientsViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Cuando shouldRefresh cambia a true (al regresar de Editar), recarga la lista
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) viewModel.refresh()
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,7 +67,7 @@ fun ClientsScreen(
         },
         containerColor = Color(0xFF0A1628)
     ) { paddingValues ->
-        Column(Modifier.fillMaxSize().padding(paddingValues)) {
+        Column(Modifier.fillMaxSize().background(Color(0xFF0A1628)).padding(paddingValues)) {
             Spacer(Modifier.height(8.dp))
             ClientSearchBar(query = uiState.searchQuery, onQueryChange = viewModel::onSearchQueryChange)
             Spacer(Modifier.height(16.dp))

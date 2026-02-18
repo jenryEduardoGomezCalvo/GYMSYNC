@@ -28,11 +28,22 @@ fun DatePickerField(
     label: String = "Fecha de inscripción",
     modifier: Modifier = Modifier
 ) {
-    // 1. Estado para controlar la visibilidad del diálogo
     var showDialog by remember { mutableStateOf(false) }
 
-    // 2. Estado del DatePicker (Material 3)
-    val datePickerState = rememberDatePickerState()
+    val initialMillis = remember(value) {
+        if (value.isNotBlank()) {
+            try {
+                java.time.LocalDate.parse(value)
+                    .atStartOfDay(java.time.ZoneOffset.UTC)
+                    .toInstant()
+                    .toEpochMilli()
+            } catch (_: Exception) { null }
+        } else null
+    }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialMillis
+    )
 
     // 3. Lógica del Diálogo
     if (showDialog) {
