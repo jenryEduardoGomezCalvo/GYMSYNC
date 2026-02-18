@@ -29,6 +29,7 @@ import com.AppexSolutions.gymsync.features.clients.di.ClientsModule
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientScreen
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -65,8 +66,10 @@ fun AppNavigation(
 
         // ── Lista de Clientes ──
         composable(Screen.Clients.route) {
+            val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
             ClientsScreen(
                 factory = clientsModule.provideClientsViewModelFactory(),
+                shouldRefresh = currentRoute == Screen.Clients.route,
                 onAddClient = {
                     navController.navigate(Screen.CreateUser.route)
                 },

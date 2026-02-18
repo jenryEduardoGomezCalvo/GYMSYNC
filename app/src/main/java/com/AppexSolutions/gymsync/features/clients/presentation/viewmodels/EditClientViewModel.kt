@@ -75,7 +75,7 @@ class EditClientViewModel(
             )
             _uiState.update { state ->
                 result.fold(
-                    onSuccess = { state.copy(isSaving = false, successMessage = "Usuario actualizado") },
+                    onSuccess = { state.copy(isSaving = false, successMessage = "Usuario actualizado", navigateBack = true) },
                     onFailure = { e -> state.copy(isSaving = false, error = e.message ?: "Error al actualizar") }
                 )
             }
@@ -109,7 +109,7 @@ class EditClientViewModel(
             val result = deleteClientUseCase(clientId)
             _uiState.update { state ->
                 result.fold(
-                    onSuccess = { state.copy(isSaving = false, successMessage = "Usuario eliminado") },
+                    onSuccess = { state.copy(isSaving = false, successMessage = "Usuario eliminado", navigateBack = true) },
                     onFailure = { e -> state.copy(isSaving = false, error = e.message ?: "Error al eliminar") }
                 )
             }
