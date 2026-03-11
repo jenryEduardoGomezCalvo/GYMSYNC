@@ -27,4 +27,7 @@ interface AuthRepository {
 
     /** Retorna true si existe al menos un usuario con biometría habilitada en caché. */
     suspend fun hasBiometricSession(): Boolean
+
+    /** Borra todos los tokens y limpia la sesión activa. */
+    suspend fun logout()
 }
