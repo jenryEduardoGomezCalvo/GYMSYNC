@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,7 @@ import com.AppexSolutions.gymsync.core.util.FormValidator
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.CreateUserUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetGymsUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetRolesUseCase
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.SaveProfilePhotoUseCase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +41,8 @@ fun formatToIsoTimestamp(dateString: String): String? {
 class CreateUserViewModel(
     private val createUserUseCase: CreateUserUseCase,
     private val getRolesUseCase: GetRolesUseCase,
-    private val getGymsUseCase: GetGymsUseCase
+    private val getGymsUseCase: GetGymsUseCase,
+    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUserUiState())
@@ -75,6 +78,7 @@ class CreateUserViewModel(
     fun onFechaNacimientoChange(v: String) { _uiState.update { it.copy(fechaNacimiento = v) } }
     fun onRolSelected(rolId: Int) { _uiState.update { it.copy(selectedRolId = rolId) } }
     fun onGymSelected(gymId: Int?) { _uiState.update { it.copy(selectedGymId = gymId) } }
+    fun onProfileImageSelected(uri: Uri) { _uiState.update { it.copy(profileImageUri = uri) } }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun createUser() {
@@ -113,7 +117,12 @@ class CreateUserViewModel(
                 fechaNacimiento = isoFechaNacimiento,
                 rolId = s.selectedRolId!!,
                 gymId = s.selectedGymId
-            ).onSuccess {
+            ).onSuccess { createdClient ->
+                // Guardar foto de perfil localmente si se seleccionó una
+                val photoUri = _uiState.value.profileImageUri
+                if (photoUri != null && saveProfilePhotoUseCase != null) {
+                    saveProfilePhotoUseCase.invoke(createdClient.id, photoUri)
+                }
                 _uiState.update { it.copy(isSaving = false, successMessage = "Creado con éxito") }
             }.onFailure { e ->
                 _uiState.update { it.copy(isSaving = false, error = e.message ?: "Error de red") }

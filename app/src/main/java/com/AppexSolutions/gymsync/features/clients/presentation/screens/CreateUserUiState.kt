@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import android.net.Uri
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Gym
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Rol
 
@@ -15,6 +16,7 @@ data class CreateUserUiState(
     val selectedGymId: Int? = null,
     val roles: List<Rol> = emptyList(),
     val gyms: List<Gym> = emptyList(),
+    val profileImageUri: Uri? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val error: String? = null,

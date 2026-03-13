@@ -1,7 +1,12 @@
 package com.AppexSolutions.gymsync.core.di
 
 import android.content.Context
+import androidx.room.Room
+import com.AppexSolutions.gymsync.core.datastore.AppDatabase
 import com.AppexSolutions.gymsync.core.datastore.AuthPreferences
+import com.AppexSolutions.gymsync.core.datastore.ProfilePhotoDao
+import com.AppexSolutions.gymsync.core.datastore.camera.CameraDataSource
+import com.AppexSolutions.gymsync.features.clients.data.datasource.hardware.ProfilePhotoManager
 import com.AppexSolutions.gymsync.core.network.AuthInterceptor
 import com.AppexSolutions.gymsync.core.network.GymSyncAPI
 import com.AppexSolutions.gymsync.features.auth.data.repositories.GymRepositoriesImp
@@ -42,5 +47,24 @@ class appContainer(context: Context) {
 
     val clientRepository: ClientRepository by lazy {
         ClientsRepoImplements(gymApis)
+    }
+
+    // 📷 Base de datos local (Room) para fotos de perfil
+    private val appDatabase: AppDatabase by lazy {
+        Room.databaseBuilder(context, AppDatabase::class.java, "gymsync_database")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .build()
+    }
+
+    val profilePhotoDao: ProfilePhotoDao by lazy {
+        appDatabase.profilePhotoDao()
+    }
+
+    val cameraDataSource: CameraDataSource by lazy {
+        CameraDataSource(context)
+    }
+
+    val profilePhotoManager: ProfilePhotoManager by lazy {
+        ProfilePhotoManager(cameraDataSource)
     }
 }

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebSearch",
-      "Bash(./gradlew:*)",
-      "Bash(export:*)"
-    ]
-  }
-}

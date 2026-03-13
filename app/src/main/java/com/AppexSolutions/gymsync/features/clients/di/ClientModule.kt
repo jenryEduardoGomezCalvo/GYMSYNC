@@ -17,10 +17,21 @@ class ClientsModule(private val appContainer: appContainer) {
     private fun provideGetRolesUseCase() = GetRolesUseCase(appContainer.clientRepository)
     private fun provideGetGymsUseCase() = GetGymsUseCase(appContainer.clientRepository)
 
+    // 📷 Foto de perfil
+    private fun provideSaveProfilePhotoUseCase() = SaveProfilePhotoUseCase(
+        profilePhotoManager = appContainer.profilePhotoManager,
+        profilePhotoDao = appContainer.profilePhotoDao
+    )
+    private fun provideGetProfilePhotoUseCase() = GetProfilePhotoUseCase(
+        profilePhotoDao = appContainer.profilePhotoDao,
+        profilePhotoManager = appContainer.profilePhotoManager
+    )
+
     /* ── FACTORIES ── */
 
     fun provideClientsViewModelFactory() = ClientsViewModelFactory(
-        getClientsUsecase = provideGetClientsUsecase()
+        getClientsUsecase = provideGetClientsUsecase(),
+        profilePhotoDao = appContainer.profilePhotoDao
     )
 
     fun provideEditClientViewModelFactory(clientId: Int) = EditClientViewModelFactory(
@@ -28,12 +39,15 @@ class ClientsModule(private val appContainer: appContainer) {
         getClientByIdUseCase = provideGetClientByIdUseCase(),
         updateClientUseCase = provideUpdateClientUseCase(),
         deleteClientUseCase = provideDeleteClientUseCase(),
-        toggleUserActiveUseCase = provideToggleUserActiveUseCase()
+        toggleUserActiveUseCase = provideToggleUserActiveUseCase(),
+        saveProfilePhotoUseCase = provideSaveProfilePhotoUseCase(),
+        getProfilePhotoUseCase = provideGetProfilePhotoUseCase()
     )
 
     fun provideCreateUserViewModelFactory() = CreateUserViewModelFactory(
         createUserUseCase = provideCreateUserUseCase(),
         getRolesUseCase = provideGetRolesUseCase(),
-        getGymsUseCase = provideGetGymsUseCase()
+        getGymsUseCase = provideGetGymsUseCase(),
+        saveProfilePhotoUseCase = provideSaveProfilePhotoUseCase()
     )
 }

@@ -1,21 +1,17 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,13 +63,11 @@ fun EditClientScreen(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Avatar
-                    Box(
-                        Modifier.size(100.dp).clip(CircleShape).background(Color(0xFF1E40AF)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Person, null, tint = Color(0xFF60A5FA), modifier = Modifier.size(56.dp))
-                    }
+                    // Avatar con selector de imagen
+                    ProfileAvatarPicker(
+                        imageUri = uiState.profileImageUri,
+                        onImageSelected = viewModel::onProfileImageSelected
+                    )
                     Spacer(Modifier.height(24.dp))
 
                     // Campos

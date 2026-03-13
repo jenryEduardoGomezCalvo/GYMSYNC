@@ -3,6 +3,7 @@ package com.AppexSolutions.gymsync.core.di
 import android.content.Context
 import androidx.room.Room
 import com.AppexSolutions.gymsync.core.datastore.AppDatabase
+import com.AppexSolutions.gymsync.core.datastore.ProfilePhotoDao
 import com.AppexSolutions.gymsync.core.datastore.UserDao
 import dagger.Module
 import dagger.Provides
@@ -22,12 +23,20 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "gymsync_database"
-        ).build()
+        )
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideUserDao(database: AppDatabase): UserDao {
         return database.userDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfilePhotoDao(database: AppDatabase): ProfilePhotoDao {
+        return database.profilePhotoDao()
     }
 }

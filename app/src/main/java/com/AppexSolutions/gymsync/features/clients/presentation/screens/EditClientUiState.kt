@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import android.net.Uri
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 
 data class EditClientUiState(
@@ -10,6 +11,7 @@ data class EditClientUiState(
     val telefono: String = "",
     val fechaNacimiento: String = "",
     val activo: Boolean = true,
+    val profileImageUri: Uri? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val error: String? = null,

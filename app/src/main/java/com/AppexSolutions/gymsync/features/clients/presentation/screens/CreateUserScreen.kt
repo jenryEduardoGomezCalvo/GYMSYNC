@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientPhoneField
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientTextField
 import com.AppexSolutions.gymsync.features.clients.presentation.components.DatePickerField
+import com.AppexSolutions.gymsync.features.clients.presentation.components.ProfileAvatarPicker
 import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.CreateUserViewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.CreateUserViewModelFactory
 
@@ -64,8 +65,16 @@ fun CreateUserScreen(
                 CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color(0xFF60A5FA))
             } else {
                 Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Avatar de perfil
+                    ProfileAvatarPicker(
+                        imageUri = uiState.profileImageUri,
+                        onImageSelected = viewModel::onProfileImageSelected
+                    )
+                    Spacer(Modifier.height(24.dp))
+
                     // Nombres y Apellidos
                     ClientTextField(value = uiState.nombres, onValueChange = viewModel::onNombresChange, label = "Nombres *", icon = Icons.Default.Person)
                     Spacer(Modifier.height(16.dp))

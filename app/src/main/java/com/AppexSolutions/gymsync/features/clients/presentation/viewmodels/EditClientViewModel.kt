@@ -1,9 +1,12 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.DeleteClientUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetProfilePhotoUseCase
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.SaveProfilePhotoUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.ToggleUserActiveUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.UpdateClientUseCase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientUiState
@@ -17,13 +20,18 @@ class EditClientViewModel(
     private val getClientByIdUseCase: GetClientByIdUseCase,
     private val updateClientUseCase: UpdateClientUseCase,
     private val deleteClientUseCase: DeleteClientUseCase,
-    private val toggleUserActiveUseCase: ToggleUserActiveUseCase
+    private val toggleUserActiveUseCase: ToggleUserActiveUseCase,
+    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase? = null,
+    private val getProfilePhotoUseCase: GetProfilePhotoUseCase? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditClientUiState())
     val uiState = _uiState.asStateFlow()
 
-    init { loadClient() }
+    init {
+        loadClient()
+        loadProfilePhoto()
+    }
 
     private fun loadClient() {
         viewModelScope.launch {
@@ -56,6 +64,29 @@ class EditClientViewModel(
     fun onEmailChange(v: String) { _uiState.update { it.copy(email = v) } }
     fun onTelefonoChange(v: String) { _uiState.update { it.copy(telefono = v) } }
     fun onFechaNacimientoChange(v: String) { _uiState.update { it.copy(fechaNacimiento = v) } }
+
+    fun onProfileImageSelected(uri: Uri) {
+        _uiState.update { it.copy(profileImageUri = uri) }
+        // Persistir la foto localmente
+        if (saveProfilePhotoUseCase != null) {
+            viewModelScope.launch {
+                saveProfilePhotoUseCase.invoke(clientId, uri)
+            }
+        }
+    }
+
+    private fun loadProfilePhoto() {
+        if (getProfilePhotoUseCase == null) return
+        viewModelScope.launch {
+            getProfilePhotoUseCase.invoke(clientId).onSuccess { localPath ->
+                if (localPath != null) {
+                    _uiState.update {
+                        it.copy(profileImageUri = Uri.fromFile(java.io.File(localPath)))
+                    }
+                }
+            }
+        }
+    }
 
     fun saveChanges() {
         val s = _uiState.value
