@@ -2,6 +2,7 @@ package com.AppexSolutions.gymsync.features.users.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.AppexSolutions.gymsync.core.datastore.ProfilePhotoDao
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
 import com.AppexSolutions.gymsync.features.users.data.FakeUserRepository
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 class UserViewModel(
     private val getClientByIdUseCase: GetClientByIdUseCase,
     private val fakeRepository: FakeUserRepository,
+    private val profilePhotoDao: ProfilePhotoDao,
     private val clientId: Int
 ) : ViewModel() {
 
@@ -41,6 +43,8 @@ class UserViewModel(
                             isLoading = false
                         )
                     }
+                    // Cargar foto de perfil desde Room
+                    loadProfilePhoto()
                 },
                 onFailure = {
                     _uiState.update {
@@ -54,17 +58,18 @@ class UserViewModel(
         }
     }
 
+    private suspend fun loadProfilePhoto() {
+        val uri = profilePhotoDao.getPhotoUri(clientId)
+        if (uri != null && java.io.File(uri).exists()) {
+            _uiState.update { it.copy(profilePhotoUri = uri) }
+        }
+    }
+
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
     }
 
-    /**
-     * Convierte un Client real de la API a MemberProfile.
-     * Datos reales: nombre, apellido, email, teléfono.
-     * Datos mock: plan, stats, QR (aún no existen en la API).
-     */
     private fun Client.toMemberProfile(): MemberProfile {
-        // Asignar plan mock basado en el ID para variedad
         val plans = listOf("Pro", "Premium", "Ultimate")
         val assignedPlan = plans[id % plans.size]
 

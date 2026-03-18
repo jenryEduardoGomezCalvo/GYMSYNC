@@ -21,6 +21,7 @@ class UserModule(private val appContainer: appContainer) {
     fun provideUserViewModelFactory(clientId: Int) = UserViewModelFactory(
         getClientByIdUseCase = provideGetClientByIdUseCase(),
         fakeRepository = fakeUserRepository,
+        profilePhotoDao = appContainer.profilePhotoDao,
         clientId = clientId
     )
 }

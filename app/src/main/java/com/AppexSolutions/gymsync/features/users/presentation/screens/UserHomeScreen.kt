@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.users.domain.entities.MemberProfile
@@ -88,7 +89,7 @@ fun UserHomeScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Header: Saludo + Avatar + Logout ──
-            HeaderSection(profile, onLogout = { showLogoutDialog = true })
+            HeaderSection(profile, profilePhotoUri = uiState.profilePhotoUri, onLogout = { showLogoutDialog = true })
 
             Spacer(Modifier.height(20.dp))
 
@@ -139,7 +140,11 @@ fun UserHomeScreen(
 
 // ── Header ──
 @Composable
-private fun HeaderSection(profile: MemberProfile, onLogout: () -> Unit = {}) {
+private fun HeaderSection(
+    profile: MemberProfile,
+    profilePhotoUri: String? = null,
+    onLogout: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,7 +176,7 @@ private fun HeaderSection(profile: MemberProfile, onLogout: () -> Unit = {}) {
 
         Spacer(Modifier.width(8.dp))
 
-        // Avatar
+        // Avatar con foto de perfil o iniciales como fallback
         Box(
             modifier = Modifier
                 .size(52.dp)
@@ -183,12 +188,23 @@ private fun HeaderSection(profile: MemberProfile, onLogout: () -> Unit = {}) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                profile.inicial,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
+            if (profilePhotoUri != null) {
+                AsyncImage(
+                    model = profilePhotoUri,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+            } else {
+                Text(
+                    profile.inicial,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
         }
     }
 }

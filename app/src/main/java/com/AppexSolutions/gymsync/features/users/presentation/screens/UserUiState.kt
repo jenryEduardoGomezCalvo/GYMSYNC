@@ -8,5 +8,6 @@ data class UserUiState(
     val plans: List<MembershipPlan> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val selectedTab: Int = 0 // 0=Home, 1=Plans, 2=Profile
+    val selectedTab: Int = 0, // 0=Home, 1=Plans, 2=Profile
+    val profilePhotoUri: String? = null
 )
