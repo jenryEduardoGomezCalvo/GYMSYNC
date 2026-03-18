@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [UserEntity::class, ClientProfilePhotoEntity::class, AttendanceEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -45,6 +45,15 @@ abstract class AppDatabase : RoomDatabase() {
                         fecha TEXT NOT NULL
                     )
                     """.trimIndent()
+                )
+            }
+        }
+
+        /** Migración v3 → v4: agrega columna fcm_token a tabla users */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE users ADD COLUMN fcm_token TEXT"
                 )
             }
         }

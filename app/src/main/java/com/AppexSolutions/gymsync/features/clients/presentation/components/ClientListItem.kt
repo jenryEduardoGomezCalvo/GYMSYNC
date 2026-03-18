@@ -10,19 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 
 @Composable
 fun ClientListItem(
     client: Client,
     modifier: Modifier = Modifier,
-    photoLocalPath: String? = null,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -45,7 +40,7 @@ fun ClientListItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar: muestra foto de perfil si existe, sino la inicial
+            // Avatar con mejor diseño
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -53,25 +48,11 @@ fun ClientListItem(
                     .background(getAvatarColor(client.id)),
                 contentAlignment = Alignment.Center
             ) {
-                if (photoLocalPath != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(java.io.File(photoLocalPath))
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Foto de ${client.nombreCompleto}",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Text(
-                        text = client.inicial.uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                Text(
+                    text = client.inicial.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))

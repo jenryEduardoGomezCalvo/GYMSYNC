@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.secrets.gradle)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    // TODO: Descomentar cuando tengas google-services.json
+    // alias(libs.plugins.gms.google.services)
 }
 android {
     namespace = "com.AppexSolutions.gymsync"
@@ -95,4 +97,21 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.appcompat)
+
+    // ZXing (QR generator)
+    implementation(libs.zxing.core)
+
+    // CameraX (scanner)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+
+    // ML Kit barcode scanning
+    implementation(libs.mlkit.barcode.scanning)
+
+    // Firebase BOM (maneja versiones compatibles)
+    // TODO: Descomentar cuando tengas google-services.json
+    // implementation(platform(libs.firebase.bom))
+    // implementation(libs.firebase.messaging)
+    // implementation(libs.firebase.analytics)
 }

@@ -40,4 +40,10 @@ interface UserDao {
 
     @Query("UPDATE users SET token = ''")
     suspend fun clearAllTokens()
+
+    @Query("UPDATE users SET fcm_token = :fcmToken WHERE email = :email")
+    suspend fun updateFcmToken(email: String, fcmToken: String)
+
+    @Query("SELECT * FROM users WHERE fcm_token IS NOT NULL LIMIT 1")
+    suspend fun getUserWithFcmToken(): UserEntity?
 }

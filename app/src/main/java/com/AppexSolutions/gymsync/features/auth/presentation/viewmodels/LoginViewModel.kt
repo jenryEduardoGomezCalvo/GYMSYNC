@@ -37,6 +37,8 @@ class LoginViewModel @Inject constructor(
     private val enableBiometricUseCase: EnableBiometricUseCase,
     private val hasBiometricSessionUseCase: HasBiometricSessionUseCase,
     private val biometricAuthManager: BiometricAuthManager
+    // TODO: Descomentar cuando actives Firebase
+    // private val initializeFcmUseCase: InitializeFcmUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginBiometricUiState())
@@ -70,6 +72,10 @@ class LoginViewModel @Inject constructor(
                     val canOfferBiometric = biometricAuthManager.isHardwareAvailable() &&
                             biometricAuthManager.isBiometricEnrolled() &&
                             !hasBiometricSessionUseCase()
+
+                    // TODO: Descomentar cuando actives Firebase
+                    // initializeFcmUseCase()
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -96,15 +102,20 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             loginWithBiometricUseCase(activity).collect { result ->
                 when (result) {
-                    is BiometricLoginResult.Success -> _uiState.update {
-                        it.copy(
-                            biometricLoginInProgress = false,
-                            authSession = AuthSession(
-                                token = result.user.token,
-                                id_user = result.user.id
-                            ),
-                            isLoginSuccessful = true
-                        )
+                    is BiometricLoginResult.Success -> {
+                        // TODO: Descomentar cuando actives Firebase
+                        // initializeFcmUseCase()
+
+                        _uiState.update {
+                            it.copy(
+                                biometricLoginInProgress = false,
+                                authSession = AuthSession(
+                                    token = result.user.token,
+                                    id_user = result.user.id
+                                ),
+                                isLoginSuccessful = true
+                            )
+                        }
                     }
                     is BiometricLoginResult.UserCancelled -> _uiState.update {
                         it.copy(biometricLoginInProgress = false)

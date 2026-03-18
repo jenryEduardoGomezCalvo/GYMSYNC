@@ -27,5 +27,8 @@ data class UserEntity(
     val biometricEnabled: Boolean = false,
 
     @ColumnInfo(name = "last_login")
-    val lastLogin: Date = Date()
+    val lastLogin: Date = Date(),
+
+    @ColumnInfo(name = "fcm_token")
+    val fcmToken: String? = null
 )

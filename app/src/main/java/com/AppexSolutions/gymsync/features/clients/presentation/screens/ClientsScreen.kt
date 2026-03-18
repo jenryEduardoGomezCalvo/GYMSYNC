@@ -124,7 +124,6 @@ fun ClientsScreen(
                         items(items = uiState.filteredClients, key = { it.id }) { client ->
                             ClientListItem(
                                 client = client,
-                                photoLocalPath = uiState.clientPhotoUris[client.id],
                                 onClick = { onClientClick(client.id) }
                             )
                         }
