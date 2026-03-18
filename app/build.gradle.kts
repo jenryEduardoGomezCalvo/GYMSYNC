@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)   //viewModel()
     implementation(libs.com.squareup.retrofit2.retrofit)        // Retrofit
+    implementation("com.google.zxing:core:3.5.2")              // QR generation
     implementation(libs.com.squareup.retrofit2.converter.json)  // JSON
     implementation(libs.io.coil.kt.coil.compose)
     implementation(libs.androidx.ui)
