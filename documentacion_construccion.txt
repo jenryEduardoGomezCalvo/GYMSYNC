@@ -1,0 +1,770 @@
+================================================================================
+                    GYMSYNC - CONSTRUCCION DEL PRODUCTO
+           Aplicacion movil Android - Kotlin / Jetpack Compose
+================================================================================
+
+
+========================================
+1. DIAGRAMAS DE FLUJO DE LA APLICACION
+========================================
+
+------------------------------------------------------------
+1.1  ARQUITECTURA GENERAL - CLEAN ARCHITECTURE + MVVM
+------------------------------------------------------------
+
+  ┌──────────────────────────────────────────────────────────┐
+  │                     PRESENTATION                         │
+  │   ┌────────────┐   ┌──────────────┐   ┌──────────────┐  │
+  │   │  Composable│   │  ViewModel   │   │   UiState    │  │
+  │   │  (Screen)  │◄──│  (StateFlow) │◄──│ (data class) │  │
+  │   └────────────┘   └──────┬───────┘   └──────────────┘  │
+  └──────────────────────────-│──────────────────────────────┘
+                              │ invoca
+  ┌───────────────────────────▼──────────────────────────────┐
+  │                       DOMAIN                             │
+  │   ┌──────────────┐   ┌──────────────────────────────┐    │
+  │   │   Use Cases  │   │  Repository Interfaces       │    │
+  │   │  (operador   │──►│  (AuthRepository,            │    │
+  │   │   invoke())  │   │   ClientRepository)          │    │
+  │   └──────────────┘   └──────────────────────────────┘    │
+  │   ┌──────────────┐                                        │
+  │   │   Entities   │  (User, Client, AuthSession, Rol, Gym) │
+  │   └──────────────┘                                        │
+  └──────────────────────────────────────────────────────────┘
+                              │ implementa
+  ┌───────────────────────────▼──────────────────────────────┐
+  │                        DATA                              │
+  │   ┌────────────────┐   ┌───────────────┐                 │
+  │   │  Repository    │   │   Mappers     │  DTO → Entity   │
+  │   │  Impl          │   │  (extension   │                 │
+  │   │  (Hilt/manual) │   │   functions)  │                 │
+  │   └───────┬────────┘   └───────────────┘                 │
+  │           │                                              │
+  │   ┌───────▼────────┐   ┌───────────────┐                 │
+  │   │  Remote Source │   │  Local Source │                 │
+  │   │  (Retrofit/API)│   │  (Room + DS)  │                 │
+  │   └────────────────┘   └───────────────┘                 │
+  └──────────────────────────────────────────────────────────┘
+
+
+------------------------------------------------------------
+1.2  FLUJO DE NAVEGACION ENTRE PANTALLAS
+------------------------------------------------------------
+
+                    ┌─────────────────┐
+     INICIO APP ──► │  LoginScreen    │
+                    │  (startDest.)   │
+                    └────────┬────────┘
+                             │ login exitoso
+                             ▼
+                    ┌─────────────────┐
+              ┌────►│  ClientsScreen  │◄─────────────────┐
+              │     │  (lista)        │                  │
+              │     └──┬──────────┬───┘                  │
+              │        │ FAB (+)  │ clic en cliente      │
+              │        ▼          ▼                       │
+              │  ┌──────────┐ ┌────────────┐             │
+              │  │ Create   │ │ EditClient │             │
+              │  │ UserScrn │ │ Screen     │             │
+              │  └────┬─────┘ └─────┬──────┘             │
+              │       │ popBackStack│ popBackStack        │
+              └───────┘             └────────────────────-┘
+
+  Bottom Navigation (en ClientsScreen):
+    [Home] → PlaceholderScreen
+    [Clients] → ya estamos
+    [Profile] → PlaceholderScreen
+
+  Logout (icono en TopBar):
+    → Dialogo confirmacion → navegar a Login, limpiando backstack completo
+
+
+------------------------------------------------------------
+1.3  FLUJO DE AUTENTICACION NORMAL
+------------------------------------------------------------
+
+  Usuario         LoginScreen        LoginViewModel       AuthRepositoryImpl
+     │                │                    │                     │
+     │─ email/pwd ───►│                    │                     │
+     │                │─── login() ───────►│                     │
+     │                │                    │── loginUseCase() ──►│
+     │                │                    │                     │── POST /auth/login
+     │                │                    │                     │◄── token + user
+     │                │                    │◄── Result.success   │
+     │                │                    │    (AuthSession)     │
+     │                │                    │── saveToken() ──────►│ DataStore
+     │                │                    │── userDao.insert() ─►│ Room DB
+     │                │                    │                     │
+     │                │                    │ ¿hardware biometrico + no tiene sesion?
+     │                │                    │       SI             │
+     │                │◄── showDialog ─────│                     │
+     │─ acepta ───────►│                   │                     │
+     │                │── confirmEnable() ►│                     │
+     │                │                    │── updateBiometric() ►│ Room (flag=true)
+     │                │                    │── isLoginSuccessful = true
+     │                │◄── navegar ────────│                     │
+
+
+------------------------------------------------------------
+1.4  FLUJO DE AUTENTICACION BIOMETRICA
+------------------------------------------------------------
+
+  Usuario         LoginScreen        LoginViewModel      LoginWithBiometricUseCase
+     │                │                    │                     │
+     │ (abre app)     │                    │                     │
+     │                │ init: checkBiometric                     │
+     │                │◄── showBiometricButton=true (si session en Room)
+     │─ toca huella ─►│                    │                     │
+     │                │── loginWithBiometric(activity) ─────────►│
+     │                │                    │                     │── getLastBiometricUser()
+     │                │                    │                     │    (Room)
+     │                │                    │                     │── BiometricPrompt.show()
+     │─ huella OK ───────────────────────────────────────────────►│
+     │                │                    │                     │── emit(Success(user))
+     │                │                    │◄── BiometricLoginResult.Success
+     │                │                    │    (token ya en Room, sin llamada API)
+     │                │                    │── isLoginSuccessful = true
+     │                │◄── navegar ────────│                     │
+
+
+------------------------------------------------------------
+1.5  FLUJO DE INYECCION DE DEPENDENCIAS (DI HIBRIDO)
+------------------------------------------------------------
+
+  GymSyncApplication (@HiltAndroidApp)
+        │
+        ▼
+  Hilt Graph (SingletonComponent)
+  ┌─────────────────────────────────────────────────────┐
+  │  DatabaseModule  ──► AppDatabase ──► UserDao        │
+  │  NetworkModule   ──► Retrofit ──► GymSyncAPI        │
+  │                   └► AuthPreferences                 │
+  │                   └► AuthInterceptor                 │
+  │  AuthHiltModule  ──► AuthRepositoryImpl             │
+  └─────────────────────────────────────────────────────┘
+        │ inyecta en
+        ▼
+  LoginViewModel (@HiltViewModel)
+  LogoutViewModel (@HiltViewModel)
+
+  ─────────────── PARALELO (legado) ─────────────────────
+
+  MainActivity
+        │── crea manualmente ──►  appContainer(context)
+        │                         ├── AuthPreferences
+        │                         ├── AuthInterceptor
+        │                         ├── OkHttpClient
+        │                         ├── Retrofit
+        │                         ├── GymSyncAPI
+        │                         ├── gymRepositories
+        │                         └── clientRepository
+        │
+        │── pasa a Navigation ──► ClientsModule(appContainer)
+                                   ├── provideClientsViewModelFactory()
+                                   ├── provideCreateUserViewModelFactory()
+                                   └── provideEditClientViewModelFactory(id)
+
+
+------------------------------------------------------------
+1.6  FLUJO DE DATOS - CLIENTES (CRUD)
+------------------------------------------------------------
+
+  ClientsScreen                ClientsViewModel           ClientRepository
+       │                              │                         │
+       │ LaunchedEffect               │                         │
+       │──────────────────────── loadClients() ───────────────►│
+       │                              │                         │── GET /users/
+       │                              │                         │◄── List<ClientDto>
+       │                              │                         │── filtrar rolId==4
+       │                              │◄── Result.success       │── toDomain()
+       │◄── LazyColumn actualizado    │                         │
+       │
+       │ usuario escribe en SearchBar
+       │──── onSearchQueryChange() ──►│ filtra en memoria
+       │◄── filteredClients actualizado
+       │
+       │ clic en cliente
+       │──── navigate(EditClient/id) ─────────────────────────────►
+       │
+  EditClientScreen              EditClientViewModel
+       │ init                         │
+       │──────────────────── loadClient(id) ──────────────────►│── GET /users/{id}
+       │◄── formulario prellenado     │
+       │ usuario guarda               │
+       │──────────────────── saveChanges() ───────────────────►│── PUT /users/{id}
+       │ usuario elimina              │
+       │──────────────────── deleteClient() ──────────────────►│── DELETE /users/{id}
+       │ usuario activa/desactiva     │
+       │──────────────────── toggleActive() ──────────────────►│── PATCH /users/{id}/toggle-active
+
+
+------------------------------------------------------------
+1.7  ESTRUCTURA DE PAQUETES
+------------------------------------------------------------
+
+  com.AppexSolutions.gymsync/
+  ├── core/
+  │   ├── Navigation/        Navigation.kt (sealed class Screen + AppNavigation)
+  │   ├── datastore/         AppDatabase, UserDao, UserEntity, Converters, datastore.kt
+  │   ├── di/                appContainer.kt, DatabaseModule, NetworkModule
+  │   ├── network/           GymSyncAPI.kt, AuthInterceptor.kt
+  │   └── util/              FormValidator.kt
+  ├── features/
+  │   ├── auth/
+  │   │   ├── domain/        entities/, repositories/, usecases/ (6)
+  │   │   ├── data/          repositories/, datasource/hardware/, datasource/remote/
+  │   │   ├── presentation/  screens/, components/, viewmodels/
+  │   │   └── di/            AuthHiltModule, AuthModule, GymModule
+  │   ├── clients/
+  │   │   ├── domain/        entities/, repositories/, usecases/ (8)
+  │   │   ├── data/          repositories/, datasource/remote/
+  │   │   ├── presentation/  screens/, components/, viewmodels/
+  │   │   └── di/            ClientModule.kt
+  │   └── dashboard/         (stub)
+  ├── ui/theme/              Color, Theme, Type
+  ├── MainActivity.kt        @AndroidEntryPoint
+  └── GymSyncApplication.kt  @HiltAndroidApp
+
+
+================================================================================
+2. PROBLEMAS RELEVANTES Y DECISIONES ARQUITECTONICAS
+================================================================================
+
+------------------------------------------------------------
+2.1  PROBLEMA: Incompatibilidad AGP 9.0 con Kotlin y Hilt
+------------------------------------------------------------
+CONTEXTO:
+  AGP 9.0.0 introdujo "Built-in Kotlin" que desactiva los plugins Kotlin externos.
+  Al usar Hilt (que requiere kapt) y KSP para Room simultaneamente, el build
+  fallaba con errores de procesador de anotaciones no encontrado.
+
+DECISION ARQUITECTONICA:
+  Se configuraron dos flags en gradle.properties:
+
+    android.builtInKotlin=false   → permite usar kotlin.android plugin externo
+    android.newDsl=false          → expone BaseExtension legacy que Hilt necesita
+
+  Ademas se separo el procesamiento de anotaciones:
+    - Hilt usa kapt  (plugin kotlin.kapt)
+    - Room usa ksp   (KSP2, version independiente 2.2.20-2.0.3)
+
+  Se actualizo a Hilt 2.56.2 (2.52 no soporta metadata de Kotlin 2.2.x).
+
+
+------------------------------------------------------------
+2.2  PROBLEMA: Migracion gradual de DI manual a Hilt
+------------------------------------------------------------
+CONTEXTO:
+  El proyecto comenzo con inyeccion de dependencias manual (appContainer).
+  Migrar todo de golpe a Hilt en una sola iteracion era riesgoso:
+  podia romper la navegacion existente y los ViewModels de clientes.
+
+DECISION ARQUITECTONICA:
+  Se adopto un enfoque hibrido consciente:
+
+  a) NUEVA feature (auth): 100% Hilt
+     - @HiltAndroidApp en Application
+     - @AndroidEntryPoint en MainActivity
+     - @HiltViewModel en LoginViewModel y LogoutViewModel
+     - Modulos Hilt: DatabaseModule, NetworkModule, AuthHiltModule
+
+  b) FEATURES EXISTENTES (clientes): mantienen appContainer + Factory pattern
+     - ClientsModule recibe appContainer como parametro
+     - Provee ViewModelFactory para ClientsScreen, CreateUserScreen, EditClientScreen
+     - ClientsViewModelFactory, CreateUserViewModelFactory, EditClientViewModelFactory
+
+  VENTAJA: permite que ambos sistemas coexistan. NetworkModule de Hilt
+  duplica intencionalmente la config de Retrofit de appContainer para
+  no crear dependencias cruzadas durante la transicion.
+
+
+------------------------------------------------------------
+2.3  PROBLEMA: Autenticacion biometrica sin llamada al servidor
+------------------------------------------------------------
+CONTEXTO:
+  Implementar login con huella dactilar requeria decidir si:
+  a) Volver a llamar al servidor con credenciales almacenadas (inseguro)
+  b) Usar el token cacheado validado por el sensor biometrico (seguro)
+
+DECISION ARQUITECTONICA:
+  Se adopto la opcion b con una arquitectura de 3 capas:
+
+  CAPA HARDWARE: BiometricAuthManager (datasource/hardware)
+    - Responsabilidad unica: mostrar el dialogo biometrico del SO
+    - Retorna Flow<BiometricResult> via callbackFlow
+    - No tiene logica de negocio
+
+  CAPA DOMINIO: LoginWithBiometricUseCase
+    - Busca la ultima sesion con biometricEnabled=true en Room
+    - Si no hay sesion → emite NoSessionFound (sin llegar al hardware)
+    - Si hay sesion → delega en BiometricAuthManager
+    - Exito → actualiza lastLogin en Room, emite el UserEntity
+
+  CAPA PRESENTACION: LoginViewModel
+    - Traduce BiometricLoginResult a cambios de UiState
+    - Controla showBiometricButton (solo visible si hay sesion en Room)
+
+  EFECTO: el login biometrico no genera trafico de red.
+  La sesion persiste entre reinicios de la app porque Room es persistente.
+
+
+------------------------------------------------------------
+2.4  PROBLEMA: Inyeccion de token en peticiones HTTP (OkHttp + coroutines)
+------------------------------------------------------------
+CONTEXTO:
+  OkHttp es sincrono por diseno. AuthPreferences usa DataStore (async/Flow).
+  Injectar el token Bearer en cada peticion requeria leer un Flow de forma
+  sincrona sin bloquear el hilo principal.
+
+DECISION ARQUITECTONICA:
+  AuthInterceptor usa runBlocking { authPreferences.token.firstOrNull() }
+
+  JUSTIFICACION: runBlocking es aceptable aqui porque:
+  - OkHttp ya ejecuta el interceptor en su propio dispatcher (no el UI thread)
+  - firstOrNull() emite el primer valor y cancela inmediatamente
+  - La latencia es microsegundos (lectura de SharedPreferences en disco)
+
+  ALTERNATIVA DESCARTADA: pasar el token como parametro a cada llamada
+  habria requerido cambios en toda la capa de red y ruptura de la abstraccion.
+
+
+------------------------------------------------------------
+2.5  PROBLEMA: Filtraje de usuarios por rol en cliente movil
+------------------------------------------------------------
+CONTEXTO:
+  La API retorna TODOS los usuarios del sistema (super_admin, admin, cliente, etc.).
+  La pantalla de clientes solo debe mostrar usuarios con rolId == 4 (clientes).
+  No existe endpoint de filtrado en el servidor.
+
+DECISION ARQUITECTONICA:
+  El filtrado se implementa en el repositorio (capa de datos), no en el ViewModel:
+
+    ClientsRepoImplements.getClients() retorna solo los que tienen rolId == 4
+
+  VENTAJA: el ViewModel y los use cases no conocen este detalle de implementacion.
+  Si el servidor agrega filtrado en el futuro, solo cambia una linea en el repo.
+  El ViewModel realiza un segundo nivel de filtrado en memoria para la busqueda
+  por texto (nombres, apellidos, email) sobre la lista ya filtrada.
+
+
+------------------------------------------------------------
+2.6  PROBLEMA: Manejo de fechas entre API e interfaz de usuario
+------------------------------------------------------------
+CONTEXTO:
+  La API retorna fechas en formato ISO 8601 completo:
+    "2026-02-16T05:07:53.196Z"
+
+  La UI solo necesita mostrar la fecha (sin hora ni timezone).
+  Al crear/actualizar un cliente, la API espera el formato timestamp completo.
+
+DECISION ARQUITECTONICA:
+  El mapper de datos maneja la conversion en el punto de entrada/salida:
+
+  EN LECTURA (ClientMapper.kt):
+    fechaNacimiento = fechaNacimiento?.substringBefore("T")
+    → "2026-02-16T05:07:53.196Z"  →  "2026-02-16"
+
+  EN ESCRITURA (CreateUserViewModel.kt):
+    fecha + "T00:00:00.000Z"
+    → "2026-02-16"  →  "2026-02-16T00:00:00.000Z"
+
+  Room usa Converters.kt para Date <-> Long (timestamp epoch en milisegundos).
+
+
+------------------------------------------------------------
+2.7  PROBLEMA: Actualizacion de lista al regresar de edicion
+------------------------------------------------------------
+CONTEXTO:
+  Al editar o eliminar un cliente y regresar a la lista, los datos mostraban
+  valores desactualizados porque ClientsViewModel no reaccionaba al regreso
+  de navegacion.
+
+DECISION ARQUITECTONICA:
+  En Navigation.kt se pasa shouldRefresh observando la ruta actual:
+
+    val currentRoute = navController.currentBackStackEntryAsState()
+                          .value?.destination?.route
+    ClientsScreen(shouldRefresh = currentRoute == Screen.Clients.route, ...)
+
+  En ClientsScreen, un LaunchedEffect con shouldRefresh como clave
+  llama a viewModel.refresh() cada vez que la pantalla vuelve a ser activa.
+
+
+================================================================================
+3. PORCIONES DE CODIGO RELEVANTES
+================================================================================
+
+------------------------------------------------------------
+3.1  LoginViewModel - Gestion de estado biometrico
+------------------------------------------------------------
+  Archivo: features/auth/presentation/viewmodels/LoginViewModel.kt
+
+  /*
+   * Estado inmutable con todas las propiedades de la pantalla de login.
+   * Un solo StateFlow expone todo el estado; la UI recompone solo lo necesario.
+   */
+  data class LoginBiometricUiState(
+      val isLoading: Boolean = false,
+      val email: String = "",
+      val password: String = "",
+      val error: String? = null,
+      val authSession: AuthSession? = null,
+      val isLoginSuccessful: Boolean = false,
+      val showBiometricButton: Boolean = false,       // visible solo si hay sesion en Room
+      val biometricLoginInProgress: Boolean = false,
+      val showEnableBiometricDialog: Boolean = false, // dialogo post-login normal
+      val lastLoggedEmail: String = ""
+  )
+
+  @HiltViewModel
+  class LoginViewModel @Inject constructor(
+      private val loginUseCase: LoginUseCase,
+      private val loginWithBiometricUseCase: LoginWithBiometricUseCase,
+      private val enableBiometricUseCase: EnableBiometricUseCase,
+      private val hasBiometricSessionUseCase: HasBiometricSessionUseCase,
+      private val biometricAuthManager: BiometricAuthManager
+  ) : ViewModel() {
+
+      private val _uiState = MutableStateFlow(LoginBiometricUiState())
+      val uiState = _uiState.asStateFlow()
+
+      init { checkBiometricAvailability() }
+
+      /** Login normal. Decide si ofrecer biometria despues del exito. */
+      fun login() {
+          ...
+          viewModelScope.launch {
+              loginUseCase(email, password).fold(
+                  onSuccess = { session ->
+                      val canOfferBiometric =
+                          biometricAuthManager.isHardwareAvailable() &&
+                          biometricAuthManager.isBiometricEnrolled() &&
+                          !hasBiometricSessionUseCase()      // solo 1 sesion biometrica max
+                      _uiState.update {
+                          it.copy(
+                              isLoading = false,
+                              authSession = session,
+                              lastLoggedEmail = email,
+                              showEnableBiometricDialog = canOfferBiometric,
+                              isLoginSuccessful = !canOfferBiometric  // navega solo si no hay dialogo
+                          )
+                      }
+                  },
+                  ...
+              )
+          }
+      }
+
+      /** Login biometrico: colecciona el Flow del use case y mapea cada resultado. */
+      fun loginWithBiometric(activity: FragmentActivity) {
+          _uiState.update { it.copy(biometricLoginInProgress = true, error = null) }
+          viewModelScope.launch {
+              loginWithBiometricUseCase(activity).collect { result ->
+                  when (result) {
+                      is BiometricLoginResult.Success ->
+                          _uiState.update {
+                              it.copy(
+                                  biometricLoginInProgress = false,
+                                  authSession = AuthSession(
+                                      token = result.user.token,
+                                      id_user = result.user.id
+                                  ),
+                                  isLoginSuccessful = true
+                              )
+                          }
+                      is BiometricLoginResult.NoSessionFound ->
+                          _uiState.update {
+                              it.copy(biometricLoginInProgress = false,
+                                      showBiometricButton = false,
+                                      error = "No se encontro sesion guardada.")
+                          }
+                      ...
+                  }
+              }
+          }
+      }
+  }
+
+
+------------------------------------------------------------
+3.2  BiometricAuthManager - callbackFlow para API de callbacks
+------------------------------------------------------------
+  Archivo: features/auth/data/datasource/hardware/BiometricAuthManager.kt
+
+  /*
+   * Patron: convierte la API de callbacks de BiometricPrompt en un Flow de Kotlin.
+   * callbackFlow crea un canal coroutine; trySend emite; close() termina el flow.
+   * awaitClose() garantiza que el canal no se cierre prematuramente.
+   */
+  fun authenticate(activity: FragmentActivity, ...): Flow<BiometricResult> = callbackFlow {
+
+      val canAuthenticate = biometricManager.canAuthenticate(BIOMETRIC_WEAK or DEVICE_CREDENTIAL)
+
+      // Verificacion temprana: si no hay hardware, emitir y terminar sin mostrar dialogo
+      when (canAuthenticate) {
+          BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+          BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+              trySend(BiometricResult.HardwareUnavailable); close(); return@callbackFlow
+          }
+          BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+              trySend(BiometricResult.NoBiometricEnrolled); close(); return@callbackFlow
+          }
+      }
+
+      val callback = object : BiometricPrompt.AuthenticationCallback() {
+          override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+              trySend(BiometricResult.Success)
+              close()
+          }
+          override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+              when (errorCode) {
+                  BiometricPrompt.ERROR_USER_CANCELED,
+                  BiometricPrompt.ERROR_NEGATIVE_BUTTON -> trySend(BiometricResult.UserCancelled)
+                  else -> trySend(BiometricResult.Error(errString.toString()))
+              }
+              close()
+          }
+          override fun onAuthenticationFailed() {
+              // El sistema ya muestra feedback (shake, contador de intentos)
+              // No cerramos el flow: el usuario puede reintentar
+          }
+      }
+
+      BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback)
+          .authenticate(promptInfo)
+
+      awaitClose { /* BiometricPrompt no requiere cancelacion manual */ }
+  }
+
+
+------------------------------------------------------------
+3.3  LoginWithBiometricUseCase - logica de dominio sin dependencia de UI
+------------------------------------------------------------
+  Archivo: features/auth/domain/usecases/LoginWithBiometricUseCase.kt
+
+  /*
+   * El use case orquesta: primero valida sesion en Room, luego delega
+   * en BiometricAuthManager. Mapea BiometricResult (capa hardware) a
+   * BiometricLoginResult (capa dominio) con semantica de negocio.
+   */
+  class LoginWithBiometricUseCase @Inject constructor(
+      private val authRepository: AuthRepository,
+      private val biometricAuthManager: BiometricAuthManager
+  ) {
+      operator fun invoke(activity: FragmentActivity): Flow<BiometricLoginResult> = flow {
+          val cachedUser = authRepository.getLastBiometricUser()
+          if (cachedUser == null) {
+              emit(BiometricLoginResult.NoSessionFound)   // sin llegar al hardware
+              return@flow
+          }
+
+          biometricAuthManager.authenticate(activity).collect { result ->
+              when (result) {
+                  BiometricResult.Success -> {
+                      authRepository.saveUserSession(cachedUser.copy(lastLogin = Date()))
+                      emit(BiometricLoginResult.Success(cachedUser))  // entrega el UserEntity
+                  }
+                  BiometricResult.UserCancelled -> emit(BiometricLoginResult.UserCancelled)
+                  BiometricResult.HardwareUnavailable -> emit(BiometricLoginResult.HardwareUnavailable)
+                  BiometricResult.NoBiometricEnrolled -> emit(BiometricLoginResult.NoBiometricEnrolled)
+                  is BiometricResult.Error -> emit(BiometricLoginResult.Error(result.message))
+              }
+          }
+      }
+  }
+
+
+------------------------------------------------------------
+3.4  AuthRepositoryImpl - persistencia dual (DataStore + Room)
+------------------------------------------------------------
+  Archivo: features/auth/data/repositories/AuthRepositoryImpl.kt
+
+  /*
+   * Tras un login exitoso se persiste en dos lugares:
+   *   1. DataStore → token para el interceptor HTTP (lectura rapida)
+   *   2. Room     → UserEntity completo para sesion biometrica futura
+   *
+   * Se preserva el flag biometricEnabled del registro existente (no se sobreescribe).
+   */
+  override suspend fun login(email: String, password: String): Result<AuthSession> {
+      return try {
+          val response = gymApi.Login(LoginRequest(email, password))
+          if (response.success) {
+              val token = response.data?.token
+                  ?: return Result.failure(Exception("Token no recibido"))
+
+              authPreferences.saveToken(token)  // DataStore: para interceptor
+
+              val existing = userDao.getUserByEmail(email)
+              userDao.insert(
+                  UserEntity(
+                      id = existing?.id ?: 0,       // preservar PK si ya existe
+                      email = email,
+                      name = buildName(response),
+                      token = token,
+                      biometricEnabled = existing?.biometricEnabled ?: false,  // NO resetear
+                      lastLogin = Date()
+                  )
+              )
+              Result.success(AuthSession(token = token, id_user = userId))
+          } else {
+              Result.failure(Exception(response.message ?: "Error de autenticacion"))
+          }
+      } catch (e: Exception) { Result.failure(e) }
+  }
+
+
+------------------------------------------------------------
+3.5  AuthInterceptor - token sincrono en OkHttp asincrono
+------------------------------------------------------------
+  Archivo: core/network/AuthInterceptor.kt
+
+  /*
+   * OkHttp es sincrono; DataStore es async. Se usa runBlocking para
+   * leer el token sin bloquear el hilo UI (OkHttp usa su propio dispatcher).
+   * firstOrNull() toma el primer valor emitido y termina el Flow.
+   */
+  class AuthInterceptor(private val authPreferences: AuthPreferences) : Interceptor {
+      override fun intercept(chain: Interceptor.Chain): Response {
+          val original = chain.request()
+          val token = runBlocking { authPreferences.token.firstOrNull() }
+
+          val requestBuilder = original.newBuilder()
+              .header("Accept", "application/json")
+
+          if (!token.isNullOrBlank()) {
+              requestBuilder.header("Authorization", "Bearer $token")
+          }
+          return chain.proceed(requestBuilder.build())
+      }
+  }
+
+
+------------------------------------------------------------
+3.6  ClientMapper - extension functions para mapeo DTO → Dominio
+------------------------------------------------------------
+  Archivo: features/clients/data/datasource/remote/mapper/ClientMapper.kt
+
+  /*
+   * Extension functions: el mapper es una funcion, no una clase.
+   * Encapsula las diferencias entre el contrato de API y el modelo de dominio:
+   *   - fechaNacimiento: recorta el timestamp ISO a solo fecha
+   *   - rolNombre: desnormaliza desde el objeto anidado (evita busquedas extra)
+   *   - gymNombre: puede ser null si el usuario no tiene gym asignado
+   */
+  fun ClientDto.toDomain(): Client = Client(
+      id          = id,
+      nombres     = nombres,
+      apellidos   = apellidos,
+      email       = email,
+      telefono    = telefono,
+      fechaNacimiento = fechaNacimiento?.substringBefore("T"),  // "2026-01-15T..." → "2026-01-15"
+      activo      = activo,
+      rolId       = rolId,
+      rolNombre   = rol?.nombre ?: "desconocido",  // desnormalizacion
+      gymId       = gymId,
+      gymNombre   = gym?.nombre                    // nullable
+  )
+
+  fun RolDto.toDomain(): Rol = Rol(id = id, nombre = nombre, descripcion = descripcion)
+  fun GymDto.toDomain(): Gym = Gym(id = id, nombre = nombre)
+
+
+------------------------------------------------------------
+3.7  Navigation - seleccion de destino y refresco de lista
+------------------------------------------------------------
+  Archivo: core/Navigation/Navigation.kt
+
+  /*
+   * Screen es un sealed class: cada objeto es una ruta de navegacion.
+   * EditClient.createRoute(id) construye la ruta con argumento tipado.
+   */
+  sealed class Screen(val route: String) {
+      object Login      : Screen("login")
+      object Clients    : Screen("clients")
+      object Home       : Screen("home")
+      object Profile    : Screen("profile")
+      object CreateUser : Screen("create_user")
+      object EditClient : Screen("edit_client/{clientId}") {
+          fun createRoute(clientId: Int) = "edit_client/$clientId"
+      }
+  }
+
+  /*
+   * Patron para refrescar la lista al regresar de edicion:
+   * currentBackStackEntryAsState() es reactivo; cuando EditClient hace
+   * popBackStack(), currentRoute vuelve a ser "clients", lo que
+   * triggerea el LaunchedEffect dentro de ClientsScreen.
+   */
+  composable(Screen.Clients.route) {
+      val currentRoute = navController.currentBackStackEntryAsState()
+                            .value?.destination?.route
+      ClientsScreen(
+          factory = clientsModule.provideClientsViewModelFactory(),
+          shouldRefresh = currentRoute == Screen.Clients.route,
+          onAddClient = { navController.navigate(Screen.CreateUser.route) },
+          onClientClick = { id -> navController.navigate(Screen.EditClient.createRoute(id)) },
+          onLogout = {
+              navController.navigate(Screen.Login.route) {
+                  popUpTo(0) { inclusive = true }  // limpia TODA la pila
+              }
+          }
+      )
+  }
+
+
+------------------------------------------------------------
+3.8  appContainer - contenedor de DI manual (legado)
+------------------------------------------------------------
+  Archivo: core/di/appContainer.kt
+
+  /*
+   * Patron Service Locator manual. Se construye una vez en MainActivity
+   * y se pasa a traves de Navigation → ClientsModule.
+   * Las dependencias son lazy: se instancian solo cuando se acceden.
+   */
+  class appContainer(context: Context) {
+      private val authPreferences = AuthPreferences(context)
+      private val authInterceptor = AuthInterceptor(authPreferences)
+      private val okHttpClient = OkHttpClient.Builder()
+          .addInterceptor(authInterceptor).build()
+      private val gymsyncRetrofit = Retrofit.Builder()
+          .baseUrl("http://98.80.61.113:3000/api/v1/")
+          .client(okHttpClient)
+          .addConverterFactory(GsonConverterFactory.create())
+          .build()
+
+      val gymApis: GymSyncAPI by lazy { gymsyncRetrofit.create(GymSyncAPI::class.java) }
+      val gymRepositories: GymSyncRepositorie by lazy { GymRepositoriesImp(gymApis, authPreferences) }
+      val clientRepository: ClientRepository by lazy { ClientsRepoImplements(gymApis) }
+  }
+
+
+------------------------------------------------------------
+3.9  GetClientsUseCase - patron operator invoke
+------------------------------------------------------------
+  Archivo: features/clients/domain/usecases/GetClientsUsecase.kt
+
+  /*
+   * El operador invoke() permite llamar al use case como si fuera una funcion:
+   *   val result = getClientsUseCase()
+   * Encapsula el try/catch y retorna Result<T> en lugar de lanzar excepciones.
+   * Este patron se aplica a todos los use cases del proyecto.
+   */
+  class GetClientsUsecase(private val repository: ClientRepository) {
+      suspend operator fun invoke(): Result<List<Client>> = try {
+          Result.success(repository.getClients())
+      } catch (e: Exception) {
+          Result.failure(e)
+      }
+  }
+
+
+================================================================================
+                              FIN DEL DOCUMENTO
+================================================================================
+  Proyecto:   GYMSYNC
+  Plataforma: Android (Kotlin 2.2.20 / Compose / AGP 9.0.0)
+  Arquitectura: Clean Architecture + MVVM + DI Hibrido (Hilt + manual)
+  Fecha:      2026-03-13
+================================================================================

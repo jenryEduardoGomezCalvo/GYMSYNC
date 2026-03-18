@@ -52,7 +52,7 @@ class appContainer(context: Context) {
     // 📷 Base de datos local (Room) para fotos de perfil
     private val appDatabase: AppDatabase by lazy {
         Room.databaseBuilder(context, AppDatabase::class.java, "gymsync_database")
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .build()
     }
 

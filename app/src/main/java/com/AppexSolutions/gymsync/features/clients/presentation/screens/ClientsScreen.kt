@@ -35,7 +35,8 @@ fun ClientsScreen(
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
     onTabSelected: (Int) -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    showBottomBar: Boolean = true
 ) {
     val viewModel: ClientsViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -94,7 +95,7 @@ fun ClientsScreen(
                 )
             )
         },
-        bottomBar = { GymBottomNavigationBar(selectedTab = 1, onTabSelected = onTabSelected) },
+        bottomBar = { if (showBottomBar) GymBottomNavigationBar(selectedTab = 1, onTabSelected = onTabSelected) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddClient,
