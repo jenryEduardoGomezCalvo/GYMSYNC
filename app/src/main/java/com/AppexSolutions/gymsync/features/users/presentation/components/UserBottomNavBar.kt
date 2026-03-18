@@ -1,0 +1,84 @@
+package com.AppexSolutions.gymsync.features.users.presentation.components
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun UserBottomNavBar(
+    selectedTab: Int = 0,
+    onTabSelected: (Int) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    NavigationBar(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    Icons.Default.Home,
+                    contentDescription = "Inicio",
+                    modifier = Modifier.size(26.dp)
+                )
+            },
+            label = { Text("Inicio") },
+            selected = selectedTab == 0,
+            onClick = { onTabSelected(0) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        )
+
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    Icons.Default.CardMembership,
+                    contentDescription = "Planes",
+                    modifier = Modifier.size(26.dp)
+                )
+            },
+            label = { Text("Planes") },
+            selected = selectedTab == 1,
+            onClick = { onTabSelected(1) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        )
+
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "Perfil",
+                    modifier = Modifier.size(26.dp)
+                )
+            },
+            label = { Text("Perfil") },
+            selected = selectedTab == 2,
+            onClick = { onTabSelected(2) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        )
+    }
+}
