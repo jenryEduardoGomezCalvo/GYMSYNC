@@ -1,5 +1,7 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,6 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -181,8 +185,7 @@ private fun PasswordField(value: String, onValueChange: (String) -> Unit, label:
     }
 }
 
-// ── Reusable Dropdown ──
-@OptIn(ExperimentalMaterial3Api::class)
+// ── Reusable Dropdown (sin ExposedDropdownMenuBox para máxima compatibilidad) ──
 @Composable
 private fun DropdownSelector(
     items: List<Pair<Int, String>>,
@@ -193,24 +196,43 @@ private fun DropdownSelector(
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = items.firstOrNull { it.first == selectedId }?.second ?: placeholder
 
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+    Box(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = selectedLabel,
             onValueChange = {},
             readOnly = true,
-            modifier = Modifier.fillMaxWidth().menuAnchor(),
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true },
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color(0xFF9CA3AF)
+                )
+            },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White, unfocusedTextColor = Color.White,
                 focusedContainerColor = Color(0xFF1A1F2E), unfocusedContainerColor = Color(0xFF1A1F2E),
-                focusedBorderColor = Color(0xFF3B82F6), unfocusedBorderColor = Color(0xFF2D3748)
-            )
+                focusedBorderColor = Color(0xFF3B82F6), unfocusedBorderColor = Color(0xFF2D3748),
+                disabledTextColor = Color.White, disabledContainerColor = Color(0xFF1A1F2E),
+                disabledBorderColor = Color(0xFF2D3748)
+            ),
+            enabled = false
         )
-        ExposedDropdownMenu(
+        // Capa clickable transparente encima del TextField deshabilitado
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { expanded = true }
+        )
+        DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            containerColor = Color(0xFF1A1F2E)
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .background(Color(0xFF1A1F2E))
         ) {
             items.forEach { (id, label) ->
                 DropdownMenuItem(

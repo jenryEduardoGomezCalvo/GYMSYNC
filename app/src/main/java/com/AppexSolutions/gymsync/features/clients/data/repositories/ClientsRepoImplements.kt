@@ -74,10 +74,24 @@ class ClientsRepoImplements(
     }
 
     override suspend fun getRoles(): List<Rol> {
-        return gymApi.getRoles().data.map { it.toDomain() }
+        return try {
+            gymApi.getRoles().data.map { it.toDomain() }
+        } catch (_: Exception) {
+            // Fallback: extraer roles únicos desde GET /users/ (no requiere token)
+            gymApi.getAllUsers().data
+                .mapNotNull { it.rol?.toDomain() }
+                .distinctBy { it.id }
+        }
     }
 
     override suspend fun getGyms(): List<Gym> {
-        return gymApi.getGyms().data.map { it.toDomain() }
+        return try {
+            gymApi.getGyms().data.map { it.toDomain() }
+        } catch (_: Exception) {
+            // Fallback: extraer gyms únicos desde GET /users/ (no requiere token)
+            gymApi.getAllUsers().data
+                .mapNotNull { it.gym?.toDomain() }
+                .distinctBy { it.id }
+        }
     }
 }
