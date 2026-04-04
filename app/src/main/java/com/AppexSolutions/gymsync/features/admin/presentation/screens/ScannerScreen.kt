@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.AppexSolutions.gymsync.features.admin.presentation.viewmodels.ScannerUiState
 import com.AppexSolutions.gymsync.features.admin.presentation.viewmodels.ScannerViewModel
@@ -77,9 +78,11 @@ fun ScannerScreen(
             uiState is ScannerUiState.AlreadyScanned ||
             uiState is ScannerUiState.Error
         ) {
+            // Capturar si fue éxito ANTES del delay para no perder el estado tras resetState()
+            val wasSuccess = uiState is ScannerUiState.Success
             delay(2000)
             viewModel.resetState()
-            if (uiState is ScannerUiState.Success) {
+            if (wasSuccess) {
                 onScanSuccess()
             }
         }
@@ -140,10 +143,14 @@ private fun CameraPreview(
     modifier: Modifier = Modifier,
     onQrDetected: (String) -> Unit
 ) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // rememberUpdatedState garantiza que el listener del future siempre use el
+    // lifecycle owner más reciente, incluso si el composable recompuso entre
+    // el momento en que factory corrió y cuando el callback se dispara.
+    val lifecycleOwnerRef = androidx.compose.runtime.rememberUpdatedState(lifecycleOwner)
     val executor = remember { Executors.newSingleThreadExecutor() }
     val barcodeScanner = remember { BarcodeScanning.getClient() }
+    val onQrDetectedRef = androidx.compose.runtime.rememberUpdatedState(onQrDetected)
 
     DisposableEffect(Unit) {
         onDispose {
@@ -155,32 +162,40 @@ private fun CameraPreview(
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
-            PreviewView(ctx).apply {
+            val previewView = PreviewView(ctx).apply {
                 scaleType = PreviewView.ScaleType.FILL_CENTER
             }
-        },
-        update = { previewView ->
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
             cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
+                try {
+                    val owner = lifecycleOwnerRef.value
 
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
+                    // Guard: si el lifecycle ya no está activo (p.ej. Activity recreada
+                    // tras conceder permiso en Android 11+), se cancela el bind
+                    // para evitar IllegalStateException: Cannot bind to a destroyed lifecycle.
+                    if (!owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@addListener
 
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { analysis ->
-                        analysis.setAnalyzer(executor) { imageProxy ->
-                            processImageProxy(imageProxy, barcodeScanner, onQrDetected)
-                        }
+                    val cameraProvider = cameraProviderFuture.get()
+
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
                     }
 
-                try {
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                        .also { analysis ->
+                            analysis.setAnalyzer(executor) { imageProxy ->
+                                processImageProxy(imageProxy, barcodeScanner) { raw ->
+                                    onQrDetectedRef.value(raw)
+                                }
+                            }
+                        }
+
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
+                        owner,
                         CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
                         imageAnalysis
@@ -188,13 +203,15 @@ private fun CameraPreview(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-            }, ContextCompat.getMainExecutor(context))
+            }, ContextCompat.getMainExecutor(ctx))
+
+            previewView
         }
     )
 }
 
 @OptIn(ExperimentalGetImage::class)
-private fun processImageProxy(
+internal fun processImageProxy(
     imageProxy: androidx.camera.core.ImageProxy,
     scanner: com.google.mlkit.vision.barcode.BarcodeScanner,
     onQrDetected: (String) -> Unit

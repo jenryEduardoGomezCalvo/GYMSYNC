@@ -2,17 +2,20 @@ package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.AppexSolutions.gymsync.core.datastore.ProfilePhotoDao
+import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetAllClientPhotosUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientsUsecase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ClientsViewModel(
+@HiltViewModel
+class ClientsViewModel @Inject constructor(
     private val getClientsUsecase: GetClientsUsecase,
-    private val profilePhotoDao: ProfilePhotoDao? = null
+    private val getAllClientPhotosUseCase: GetAllClientPhotosUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClientsUiState())
@@ -41,23 +44,14 @@ class ClientsViewModel(
                     }
                 )
             }
-            // Cargar fotos de perfil locales después de obtener clientes
             loadClientPhotos()
         }
     }
 
     private suspend fun loadClientPhotos() {
-        if (profilePhotoDao == null) return
         val clients = _uiState.value.clients
         if (clients.isEmpty()) return
-
-        val photoMap = mutableMapOf<Int, String>()
-        for (client in clients) {
-            val uri = profilePhotoDao.getPhotoUri(client.id)
-            if (uri != null && java.io.File(uri).exists()) {
-                photoMap[client.id] = uri
-            }
-        }
+        val photoMap = getAllClientPhotosUseCase(clients.map { it.id })
         _uiState.update { it.copy(clientPhotoUris = photoMap) }
     }
 

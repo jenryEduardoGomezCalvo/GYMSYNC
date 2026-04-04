@@ -19,39 +19,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.auth.presentation.viewmodels.LogoutViewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientListItem
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientSearchBar
 import com.AppexSolutions.gymsync.features.clients.presentation.components.GymBottomNavigationBar
 import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.ClientsViewModel
-import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.ClientsViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(
-    factory: ClientsViewModelFactory,
-    shouldRefresh: Boolean = false,
+    viewModel: ClientsViewModel = hiltViewModel(),
     onAddClient: () -> Unit = {},
     onClientClick: (Int) -> Unit = {},
     onTabSelected: (Int) -> Unit = {},
     onLogout: () -> Unit = {},
     showBottomBar: Boolean = true
 ) {
-    val viewModel: ClientsViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val logoutViewModel: LogoutViewModel = hiltViewModel()
     val loggedOut by logoutViewModel.loggedOut.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(loggedOut) {
-        if (loggedOut) onLogout()
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
     }
 
-    // Cuando shouldRefresh cambia a true (al regresar de Editar), recarga la lista
-    LaunchedEffect(shouldRefresh) {
-        if (shouldRefresh) viewModel.refresh()
+    LaunchedEffect(loggedOut) {
+        if (loggedOut) onLogout()
     }
 
     if (showLogoutDialog) {

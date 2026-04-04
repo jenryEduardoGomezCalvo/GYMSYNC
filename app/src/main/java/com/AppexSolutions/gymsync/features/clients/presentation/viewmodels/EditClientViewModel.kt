@@ -1,6 +1,7 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.DeleteClientUseCase
@@ -10,20 +11,25 @@ import com.AppexSolutions.gymsync.features.clients.domain.usecases.SaveProfilePh
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.ToggleUserActiveUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.UpdateClientUseCase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class EditClientViewModel(
-    private val clientId: Int,
+@HiltViewModel
+class EditClientViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val getClientByIdUseCase: GetClientByIdUseCase,
     private val updateClientUseCase: UpdateClientUseCase,
     private val deleteClientUseCase: DeleteClientUseCase,
     private val toggleUserActiveUseCase: ToggleUserActiveUseCase,
-    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase? = null,
-    private val getProfilePhotoUseCase: GetProfilePhotoUseCase? = null
+    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase,
+    private val getProfilePhotoUseCase: GetProfilePhotoUseCase
 ) : ViewModel() {
+
+    private val clientId: Int = savedStateHandle["clientId"] ?: 0
 
     private val _uiState = MutableStateFlow(EditClientUiState())
     val uiState = _uiState.asStateFlow()
@@ -67,16 +73,12 @@ class EditClientViewModel(
 
     fun onProfileImageSelected(uri: Uri) {
         _uiState.update { it.copy(profileImageUri = uri) }
-        // Persistir la foto localmente
-        if (saveProfilePhotoUseCase != null) {
-            viewModelScope.launch {
-                saveProfilePhotoUseCase.invoke(clientId, uri)
-            }
+        viewModelScope.launch {
+            saveProfilePhotoUseCase.invoke(clientId, uri)
         }
     }
 
     private fun loadProfilePhoto() {
-        if (getProfilePhotoUseCase == null) return
         viewModelScope.launch {
             getProfilePhotoUseCase.invoke(clientId).onSuccess { localPath ->
                 if (localPath != null) {

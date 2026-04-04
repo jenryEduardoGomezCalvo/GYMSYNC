@@ -8,8 +8,9 @@ import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Gym
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Rol
 import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRepository
+import javax.inject.Inject
 
-class ClientsRepoImplements(
+class ClientsRepoImplements @Inject constructor(
     private val gymApi: GymSyncAPI
 ) : ClientRepository {
 

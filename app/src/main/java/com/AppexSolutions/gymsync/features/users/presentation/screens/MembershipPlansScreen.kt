@@ -17,22 +17,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.users.domain.entities.MembershipPlan
 import com.AppexSolutions.gymsync.features.users.domain.entities.PlanIcon
 import com.AppexSolutions.gymsync.features.users.presentation.components.UserBottomNavBar
 import com.AppexSolutions.gymsync.features.users.presentation.viewmodels.UserViewModel
-import com.AppexSolutions.gymsync.features.users.presentation.viewmodels.UserViewModelFactory
 import com.AppexSolutions.gymsync.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MembershipPlansScreen(
-    factory: UserViewModelFactory,
+    viewModel: UserViewModel = hiltViewModel(),
     onTabSelected: (Int) -> Unit = {}
 ) {
-    val viewModel: UserViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(

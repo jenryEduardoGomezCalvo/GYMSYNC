@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "374540477760",
+    "project_id": "gymsync-5708f",
+    "storage_bucket": "gymsync-5708f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374540477760:android:6c5a87cd037115c07206a5",
+        "android_client_info": {
+          "package_name": "com.AppexSolutions.gymsync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKCc2CU9ZRZeZwBwtmjKelcODVVBBeQ0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374540477760:android:1b1489142280f0a87206a5",
+        "android_client_info": {
+          "package_name": "com.company.gymsync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKCc2CU9ZRZeZwBwtmjKelcODVVBBeQ0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

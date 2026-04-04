@@ -5,7 +5,12 @@
       "Bash(./gradlew assembleDebug:*)",
       "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug:*)",
       "Bash(./gradlew :app:build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Skill(brainstorm:clarify)",
+      "Read(//c/Users/jenry eduardo gomez/AppData/Local/Google/**)",
+      "Read(//c/Program Files/Android/Android Studio/jbr/**)",
+      "Read(//c/Users/jenry eduardo gomez/.gradle/**)"
     ]
   }
 }

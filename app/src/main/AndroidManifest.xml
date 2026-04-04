@@ -2,16 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- NUEVOS: Permisos para FCM (descomentar cuando actives Firebase)
+    <!-- Notificaciones locales de rutinas -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    -->
 
     <application
         android:name=".GymSyncApplication"
@@ -24,6 +29,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GymSync">
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -48,7 +54,19 @@
             </intent-filter>
         </activity>
 
-        <!-- TODO: Descomentar cuando tengas google-services.json
+        <!-- Rutinas: BroadcastReceivers para notificaciones y reprogramación tras reinicio -->
+        <receiver
+            android:name=".features.routines.notifications.RoutineNotificationReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".features.routines.notifications.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".features.notifications.service.GymSyncMessagingService"
             android:exported="false"
@@ -60,14 +78,13 @@
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher_foreground" />
+            android:resource="@drawable/ic_launcher_foreground" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="gymsync_general" />
         <meta-data
             android:name="firebase_analytics_collection_enabled"
             android:value="true" />
-        -->
 
     </application>
 

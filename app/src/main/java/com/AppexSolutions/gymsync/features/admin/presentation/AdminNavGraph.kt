@@ -10,41 +10,33 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.AppexSolutions.gymsync.core.di.appContainer
+import androidx.navigation.toRoute
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminDashboard
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminScanner
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminClients
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminCreateUser
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminEditClient
 import com.AppexSolutions.gymsync.features.admin.presentation.components.AdminBottomNavBar
 import com.AppexSolutions.gymsync.features.admin.presentation.components.AdminTab
 import com.AppexSolutions.gymsync.features.admin.presentation.screens.DashboardScreen
 import com.AppexSolutions.gymsync.features.admin.presentation.screens.ScannerScreen
-import com.AppexSolutions.gymsync.features.clients.di.ClientsModule
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientScreen
 
-private object AdminRoutes {
-    const val DASHBOARD   = "admin/dashboard"
-    const val SCANNER     = "admin/scanner"
-    const val CLIENTS     = "admin/clients"
-    const val CREATE_USER = "admin/clients/create"
-    const val EDIT_CLIENT = "admin/clients/edit/{clientId}"
-    fun editClient(clientId: Int) = "admin/clients/edit/$clientId"
-}
-
 @Composable
 fun AdminNavGraph(
-    appContainer: appContainer,
     onLogout: () -> Unit,
     navController: NavHostController = rememberNavController()
 ) {
-    val clientsModule = androidx.compose.runtime.remember { ClientsModule(appContainer) }
-
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
 
-    val selectedTab = when (currentRoute) {
-        AdminRoutes.DASHBOARD -> AdminTab.Dashboard.index
-        AdminRoutes.SCANNER   -> AdminTab.Scanner.index
-        AdminRoutes.CLIENTS   -> AdminTab.Clients.index
-        else                  -> AdminTab.Dashboard.index
+    val selectedTab = when {
+        currentRoute?.endsWith("AdminDashboard") == true -> AdminTab.Dashboard.index
+        currentRoute?.endsWith("AdminScanner") == true   -> AdminTab.Scanner.index
+        currentRoute?.endsWith("AdminClients") == true   -> AdminTab.Clients.index
+        else                                             -> AdminTab.Dashboard.index
     }
 
     Scaffold(
@@ -53,13 +45,13 @@ fun AdminNavGraph(
                 selectedTab = selectedTab,
                 onTabSelected = { tabIndex ->
                     val route = when (tabIndex) {
-                        AdminTab.Dashboard.index -> AdminRoutes.DASHBOARD
-                        AdminTab.Scanner.index   -> AdminRoutes.SCANNER
-                        AdminTab.Clients.index   -> AdminRoutes.CLIENTS
-                        else                     -> AdminRoutes.DASHBOARD
+                        AdminTab.Dashboard.index -> AdminDashboard
+                        AdminTab.Scanner.index   -> AdminScanner
+                        AdminTab.Clients.index   -> AdminClients
+                        else                     -> AdminDashboard
                     }
                     navController.navigate(route) {
-                        popUpTo(AdminRoutes.DASHBOARD) { saveState = true }
+                        popUpTo<AdminDashboard> { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -70,39 +62,37 @@ fun AdminNavGraph(
 
         NavHost(
             navController = navController,
-            startDestination = AdminRoutes.DASHBOARD,
+            startDestination = AdminDashboard,
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            // ── Dashboard (hiltViewModel internamente) ──
-            composable(AdminRoutes.DASHBOARD) {
+            // ── Dashboard ──
+            composable<AdminDashboard> {
                 DashboardScreen()
             }
 
-            // ── Scanner QR (hiltViewModel internamente) ──
-            composable(AdminRoutes.SCANNER) {
+            // ── Scanner QR ──
+            composable<AdminScanner> {
                 ScannerScreen(
                     onNavigateBack = {
-                        navController.navigate(AdminRoutes.DASHBOARD) {
-                            popUpTo(AdminRoutes.DASHBOARD) { inclusive = true }
+                        navController.navigate(AdminDashboard) {
+                            popUpTo<AdminDashboard> { inclusive = true }
                         }
                     },
                     onScanSuccess = {
-                        navController.navigate(AdminRoutes.DASHBOARD) {
-                            popUpTo(AdminRoutes.DASHBOARD) { inclusive = true }
+                        navController.navigate(AdminDashboard) {
+                            popUpTo<AdminDashboard> { inclusive = true }
                             launchSingleTop = true
                         }
                     }
                 )
             }
 
-            // ── Clientes (factory manual — cadena legacy) ──
-            composable(AdminRoutes.CLIENTS) {
+            // ── Clientes ──
+            composable<AdminClients> {
                 ClientsScreen(
-                    factory = clientsModule.provideClientsViewModelFactory(),
-                    shouldRefresh = currentRoute == AdminRoutes.CLIENTS,
-                    onAddClient = { navController.navigate(AdminRoutes.CREATE_USER) },
-                    onClientClick = { clientId -> navController.navigate(AdminRoutes.editClient(clientId)) },
+                    onAddClient = { navController.navigate(AdminCreateUser) },
+                    onClientClick = { clientId -> navController.navigate(AdminEditClient(clientId)) },
                     onTabSelected = { _ -> },
                     onLogout = onLogout,
                     showBottomBar = false
@@ -110,12 +100,11 @@ fun AdminNavGraph(
             }
 
             // ── Crear cliente ──
-            composable(AdminRoutes.CREATE_USER) {
+            composable<AdminCreateUser> {
                 CreateUserScreen(
-                    factory = clientsModule.provideCreateUserViewModelFactory(),
                     onSuccess = {
-                        navController.navigate(AdminRoutes.CLIENTS) {
-                            popUpTo(AdminRoutes.CLIENTS) { inclusive = true }
+                        navController.navigate(AdminClients) {
+                            popUpTo<AdminClients> { inclusive = true }
                         }
                     },
                     onBack = { navController.popBackStack() }
@@ -123,10 +112,8 @@ fun AdminNavGraph(
             }
 
             // ── Editar cliente ──
-            composable(AdminRoutes.EDIT_CLIENT) { backStackEntry ->
-                val clientId = backStackEntry.arguments?.getString("clientId")?.toIntOrNull() ?: return@composable
+            composable<AdminEditClient> {
                 EditClientScreen(
-                    factory = clientsModule.provideEditClientViewModelFactory(clientId),
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

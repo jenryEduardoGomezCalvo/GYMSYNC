@@ -8,8 +8,8 @@ plugins {
     alias(libs.plugins.secrets.gradle)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    // TODO: Descomentar cuando tengas google-services.json
-    // alias(libs.plugins.gms.google.services)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.gms.google.services)
 }
 android {
     namespace = "com.AppexSolutions.gymsync"
@@ -72,8 +72,7 @@ dependencies {
     implementation(libs.com.squareup.retrofit2.converter.json)  // JSON
     implementation(libs.io.coil.kt.coil.compose)
     implementation(libs.androidx.ui)
-    implementation(libs.androidx.navigation.common.ktx)                // IO
-    testImplementation(libs.junit)
+testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -103,15 +102,23 @@ dependencies {
 
     // CameraX (scanner)
     implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
     // ML Kit barcode scanning
     implementation(libs.mlkit.barcode.scanning)
 
-    // Firebase BOM (maneja versiones compatibles)
-    // TODO: Descomentar cuando tengas google-services.json
-    // implementation(platform(libs.firebase.bom))
-    // implementation(libs.firebase.messaging)
-    // implementation(libs.firebase.analytics)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase BOM + FCM
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+}
+
+kapt {
+    correctErrorTypes = true
 }

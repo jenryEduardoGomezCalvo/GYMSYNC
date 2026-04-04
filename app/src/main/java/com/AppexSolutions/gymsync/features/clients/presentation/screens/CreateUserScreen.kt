@@ -1,5 +1,7 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,23 +20,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientPhoneField
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ClientTextField
 import com.AppexSolutions.gymsync.features.clients.presentation.components.DatePickerField
 import com.AppexSolutions.gymsync.features.clients.presentation.components.ProfileAvatarPicker
 import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.CreateUserViewModel
-import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.CreateUserViewModelFactory
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateUserScreen(
-    factory: CreateUserViewModelFactory,
+    viewModel: CreateUserViewModel = hiltViewModel(),
     onSuccess: () -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel: CreateUserViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.successMessage) {

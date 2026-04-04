@@ -1,26 +1,30 @@
 package com.AppexSolutions.gymsync.features.users.presentation.viewmodels
 
 import android.graphics.Bitmap
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.AppexSolutions.gymsync.core.util.QrGenerator
-import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
-import com.AppexSolutions.gymsync.features.users.data.FakeUserRepository
-import com.AppexSolutions.gymsync.features.users.domain.entities.MemberProfile
-import com.AppexSolutions.gymsync.features.users.domain.entities.PlanStatus
+import com.AppexSolutions.gymsync.features.users.data.mapper.toMemberProfile
+import com.AppexSolutions.gymsync.features.users.domain.repositories.UserDataRepository
 import com.AppexSolutions.gymsync.features.users.presentation.screens.UserUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UserViewModel(
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val getClientByIdUseCase: GetClientByIdUseCase,
-    private val fakeRepository: FakeUserRepository,
-    private val clientId: Int,
+    private val userDataRepository: UserDataRepository,
     private val qrGenerator: QrGenerator
 ) : ViewModel() {
+
+    private val clientId: Int = savedStateHandle["clientId"] ?: 0
 
     private val _qrBitmap = MutableStateFlow<Bitmap?>(null)
     val qrBitmap = _qrBitmap.asStateFlow()
@@ -40,10 +44,11 @@ class UserViewModel(
             result.fold(
                 onSuccess = { client ->
                     val profile = client.toMemberProfile()
+                    val plans = userDataRepository.getMembershipPlans()
                     _uiState.update {
                         it.copy(
                             profile = profile,
-                            plans = fakeRepository.membershipPlans,
+                            plans = plans,
                             isLoading = false
                         )
                     }
@@ -72,34 +77,5 @@ class UserViewModel(
                 nombre = profile.nombreCompleto
             )
         }
-    }
-
-    /**
-     * Convierte un Client real de la API a MemberProfile.
-     * Datos reales: nombre, apellido, email, teléfono.
-     * Datos mock: plan, stats, QR (aún no existen en la API).
-     */
-    private fun Client.toMemberProfile(): MemberProfile {
-        // Asignar plan mock basado en el ID para variedad
-        val plans = listOf("Pro", "Premium", "Ultimate")
-        val assignedPlan = plans[id % plans.size]
-
-        val isActive = activo
-        val status = if (isActive) PlanStatus.ACTIVO else PlanStatus.VENCIDO
-
-        return MemberProfile(
-            id = id,
-            nombres = nombres,
-            apellidos = apellidos,
-            email = email,
-            telefono = telefono,
-            currentPlan = assignedPlan,
-            planStatus = status,
-            nextPaymentDate = if (isActive) "10 Abril 2026" else "—",
-            daysRemaining = if (isActive) (15 + (id * 7) % 30) else 0,
-            currentStreak = if (isActive) (3 + (id * 5) % 25) else 0,
-            monthlyVisits = if (isActive) (5 + (id * 3) % 20) else 0,
-            qrCode = "GYMSYNC-USR-${id.toString().padStart(3, '0')}-2026"
-        )
     }
 }

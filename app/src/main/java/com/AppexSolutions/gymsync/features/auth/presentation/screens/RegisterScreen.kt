@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.AppexSolutions.gymsync.features.auth.presentation.components.ErrorDialog
 import com.AppexSolutions.gymsync.features.auth.presentation.components.PasswordTextField
 import com.AppexSolutions.gymsync.features.auth.presentation.components.PrimaryButton
 import com.AppexSolutions.gymsync.features.auth.presentation.components.RegisterDatePickerField

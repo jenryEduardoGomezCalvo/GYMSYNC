@@ -1,9 +1,11 @@
 package com.AppexSolutions.gymsync.features.auth.presentation.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,26 +14,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.AppexSolutions.gymsync.features.auth.presentation.components.EnableBiometricDialog
+import com.AppexSolutions.gymsync.features.auth.presentation.components.ErrorDialog
 import com.AppexSolutions.gymsync.features.auth.presentation.components.LoginTextField
 import com.AppexSolutions.gymsync.features.auth.presentation.components.PasswordTextField
 import com.AppexSolutions.gymsync.features.auth.presentation.components.PrimaryButton
 import com.AppexSolutions.gymsync.features.users.presentation.viewmodels.UserLoginViewModel
-import com.AppexSolutions.gymsync.features.users.presentation.viewmodels.UserLoginViewModelFactory
 import com.AppexSolutions.gymsync.ui.theme.*
 
+@SuppressLint("ContextCastToActivity")
 @Composable
 fun UserLoginScreen(
-    factory: UserLoginViewModelFactory,
+    viewModel: UserLoginViewModel = hiltViewModel(),
     onUserSelected: (Int) -> Unit = {}
 ) {
-    val viewModel: UserLoginViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val activity = LocalContext.current as? FragmentActivity
 
-    // Navegar cuando el login sea exitoso
     LaunchedEffect(uiState.loggedClientId) {
         uiState.loggedClientId?.let { clientId ->
             onUserSelected(clientId)
@@ -56,7 +61,6 @@ fun UserLoginScreen(
         ) {
             Spacer(Modifier.height(80.dp))
 
-            // Logo
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -91,7 +95,6 @@ fun UserLoginScreen(
 
             Spacer(Modifier.height(48.dp))
 
-            // Email
             LoginTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
@@ -102,7 +105,6 @@ fun UserLoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Password
             PasswordTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
@@ -112,16 +114,42 @@ fun UserLoginScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // Login button
             PrimaryButton(
                 text = if (uiState.isLoading) "Iniciando sesión..." else "Iniciar sesión",
                 onClick = viewModel::login,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             )
+
+            if (uiState.showBiometricButton) {
+                Spacer(Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { activity?.let { viewModel.loginWithBiometric(it) } },
+                    enabled = !uiState.biometricLoginInProgress && !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF8B5CF6)
+                    )
+                ) {
+                    if (uiState.biometricLoginInProgress) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    } else {
+                        Icon(Icons.Default.Fingerprint, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Entrar con huella")
+                }
+            }
         }
 
-        // Error dialog
+        if (uiState.showEnableBiometricDialog) {
+            EnableBiometricDialog(
+                onConfirm = viewModel::confirmEnableBiometric,
+                onSkip = viewModel::skipEnableBiometric
+            )
+        }
+
         if (uiState.error != null) {
             ErrorDialog(
                 message = uiState.error!!,
@@ -129,7 +157,6 @@ fun UserLoginScreen(
             )
         }
 
-        // Loading overlay
         if (uiState.isLoading) {
             Box(
                 Modifier

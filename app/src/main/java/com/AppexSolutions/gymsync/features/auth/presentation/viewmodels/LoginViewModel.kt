@@ -10,6 +10,7 @@ import com.AppexSolutions.gymsync.features.auth.domain.usecases.EnableBiometricU
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.HasBiometricSessionUseCase
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.LoginUseCase
 import com.AppexSolutions.gymsync.features.auth.domain.usecases.LoginWithBiometricUseCase
+import com.AppexSolutions.gymsync.features.notifications.domain.usecases.InitializeFcmUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,9 +37,8 @@ class LoginViewModel @Inject constructor(
     private val loginWithBiometricUseCase: LoginWithBiometricUseCase,
     private val enableBiometricUseCase: EnableBiometricUseCase,
     private val hasBiometricSessionUseCase: HasBiometricSessionUseCase,
-    private val biometricAuthManager: BiometricAuthManager
-    // TODO: Descomentar cuando actives Firebase
-    // private val initializeFcmUseCase: InitializeFcmUseCase
+    private val biometricAuthManager: BiometricAuthManager,
+    private val initializeFcmUseCase: InitializeFcmUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginBiometricUiState())
@@ -73,8 +73,7 @@ class LoginViewModel @Inject constructor(
                             biometricAuthManager.isBiometricEnrolled() &&
                             !hasBiometricSessionUseCase()
 
-                    // TODO: Descomentar cuando actives Firebase
-                    // initializeFcmUseCase()
+                    initializeFcmUseCase()
 
                     _uiState.update {
                         it.copy(
@@ -103,8 +102,7 @@ class LoginViewModel @Inject constructor(
             loginWithBiometricUseCase(activity).collect { result ->
                 when (result) {
                     is BiometricLoginResult.Success -> {
-                        // TODO: Descomentar cuando actives Firebase
-                        // initializeFcmUseCase()
+                        initializeFcmUseCase()
 
                         _uiState.update {
                             it.copy(

@@ -1,5 +1,7 @@
 package com.AppexSolutions.gymsync.features.clients.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,20 +19,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.AppexSolutions.gymsync.features.clients.presentation.components.*
 import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.EditClientViewModel
-import com.AppexSolutions.gymsync.features.clients.presentation.viewmodels.EditClientViewModelFactory
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditClientScreen(
-    factory: EditClientViewModelFactory,
+    viewModel: EditClientViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: EditClientViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.navigateBack) {

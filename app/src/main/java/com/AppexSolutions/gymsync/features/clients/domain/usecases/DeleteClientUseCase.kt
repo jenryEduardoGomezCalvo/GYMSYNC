@@ -1,8 +1,9 @@
 package com.AppexSolutions.gymsync.features.clients.domain.usecases
 
 import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRepository
+import javax.inject.Inject
 
-class DeleteClientUseCase(private val repository: ClientRepository) {
+class DeleteClientUseCase @Inject constructor(private val repository: ClientRepository) {
     suspend operator fun invoke(userId: Int): Result<Unit> = try {
         repository.deleteUser(userId)
         Result.success(Unit)
