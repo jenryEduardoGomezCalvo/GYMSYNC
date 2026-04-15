@@ -74,17 +74,29 @@ class EditClientViewModel @Inject constructor(
     fun onProfileImageSelected(uri: Uri) {
         _uiState.update { it.copy(profileImageUri = uri) }
         viewModelScope.launch {
-            saveProfilePhotoUseCase.invoke(clientId, uri)
+            val result = saveProfilePhotoUseCase.invoke(clientId, uri)
+            result.fold(
+                onSuccess = { publicUrl ->
+                    val cacheBustedUrl = "$publicUrl?t=${System.currentTimeMillis()}"
+                    _uiState.update { it.copy(profileImageUri = Uri.parse(cacheBustedUrl)) }
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(error = "Error al subir foto: ${e.message}") }
+                }
+            )
         }
     }
 
     private fun loadProfilePhoto() {
         viewModelScope.launch {
-            getProfilePhotoUseCase.invoke(clientId).onSuccess { localPath ->
-                if (localPath != null) {
-                    _uiState.update {
-                        it.copy(profileImageUri = Uri.fromFile(java.io.File(localPath)))
+            getProfilePhotoUseCase.invoke(clientId).onSuccess { photoRef ->
+                if (photoRef != null) {
+                    val uri = if (photoRef.startsWith("http")) {
+                        Uri.parse("$photoRef?t=${System.currentTimeMillis()}")
+                    } else {
+                        Uri.fromFile(java.io.File(photoRef))
                     }
+                    _uiState.update { it.copy(profileImageUri = uri) }
                 }
             }
         }

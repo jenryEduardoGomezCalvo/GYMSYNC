@@ -117,6 +117,10 @@ testImplementation(libs.junit)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
+
+    // Supabase Storage + Ktor
+    implementation(libs.supabase.storage)
+    implementation(libs.ktor.client.android)
 }
 
 kapt {

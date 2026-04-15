@@ -30,7 +30,7 @@ import com.AppexSolutions.gymsync.features.routines.data.local.entity.RoutineHis
         RoutineHistoryEntity::class,
         ProgressEntryEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -127,6 +127,15 @@ abstract class AppDatabase : RoomDatabase() {
                         notes TEXT
                     )
                     """.trimIndent()
+                )
+            }
+        }
+
+        /** Migración v7 → v8: agrega columna photo_url a client_profile_photos para Supabase Storage */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE client_profile_photos ADD COLUMN photo_url TEXT"
                 )
             }
         }

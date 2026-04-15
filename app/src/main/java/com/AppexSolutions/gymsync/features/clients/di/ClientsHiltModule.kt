@@ -31,8 +31,7 @@ abstract class ClientsHiltModule {
         @Provides
         @Singleton
         fun provideGetAllClientPhotosUseCase(
-            profilePhotoDao: ProfilePhotoDao,
-            profilePhotoManager: ProfilePhotoManager
-        ): GetAllClientPhotosUseCase = GetAllClientPhotosUseCase(profilePhotoDao, profilePhotoManager)
+            profilePhotoDao: ProfilePhotoDao
+        ): GetAllClientPhotosUseCase = GetAllClientPhotosUseCase(profilePhotoDao)
     }
 }

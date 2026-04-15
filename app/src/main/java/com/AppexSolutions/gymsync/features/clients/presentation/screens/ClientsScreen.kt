@@ -117,8 +117,10 @@ fun ClientsScreen(
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
                         items(items = uiState.filteredClients, key = { it.id }) { client ->
+                            val photoUrl = uiState.clientPhotoUris[client.id]
                             ClientListItem(
                                 client = client,
+                                photoUrl = photoUrl,
                                 onClick = { onClientClick(client.id) }
                             )
                         }
