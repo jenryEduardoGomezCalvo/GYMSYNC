@@ -10,7 +10,13 @@
       "Skill(brainstorm:clarify)",
       "Read(//c/Users/jenry eduardo gomez/AppData/Local/Google/**)",
       "Read(//c/Program Files/Android/Android Studio/jbr/**)",
-      "Read(//c/Users/jenry eduardo gomez/.gradle/**)"
+      "Read(//c/Users/jenry eduardo gomez/.gradle/**)",
+      "Bash(xargs -I {} bash -c 'echo \"\"=== {} ===\"\" && cat {}')",
+      "Bash(git clone:*)",
+      "Bash(.\\\\gradlew.bat assembleDebug:*)",
+      "Bash(cmd /c \"gradlew.bat assembleDebug 2>&1\")",
+      "Bash(cmd /c \"gradlew.bat assembleDebug 2>&1 | findstr /i \"\"BUILD error Error:\"\"\")",
+      "Bash(./gradlew.bat assembleDebug:*)"
     ]
   }
 }

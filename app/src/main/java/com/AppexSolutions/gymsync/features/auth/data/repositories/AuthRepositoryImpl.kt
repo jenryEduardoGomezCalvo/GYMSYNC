@@ -48,7 +48,9 @@ class AuthRepositoryImpl @Inject constructor(
                     )
                 )
 
-                Result.success(AuthSession(token = token, id_user = userId))
+                val roleName = userDto?.rol?.nombre
+
+                Result.success(AuthSession(token = token, id_user = userId, roleName = roleName))
             } else {
                 Result.failure(Exception(response.message ?: "Error de autenticación"))
             }

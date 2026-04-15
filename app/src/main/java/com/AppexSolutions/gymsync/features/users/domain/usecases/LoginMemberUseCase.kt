@@ -11,6 +11,19 @@ class LoginMemberUseCase @Inject constructor(
         if (email.isBlank() || password.isBlank()) {
             return Result.failure(IllegalArgumentException("Completa todos los campos"))
         }
-        return authRepository.login(email.trim(), password)
+
+        val result = authRepository.login(email.trim(), password)
+
+        return result.fold(
+            onSuccess = { session ->
+                val role = session.roleName?.lowercase()
+                if (role != "cliente") {
+                    Result.failure(IllegalArgumentException("Esta cuenta no es de miembro. Usa el acceso de administrador."))
+                } else {
+                    Result.success(session)
+                }
+            },
+            onFailure = { Result.failure(it) }
+        )
     }
 }
