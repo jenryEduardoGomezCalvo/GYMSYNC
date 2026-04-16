@@ -2,7 +2,6 @@ package com.AppexSolutions.gymsync.features.clients.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetAllClientPhotosUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientsUsecase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,8 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ClientsViewModel @Inject constructor(
-    private val getClientsUsecase: GetClientsUsecase,
-    private val getAllClientPhotosUseCase: GetAllClientPhotosUseCase
+    private val getClientsUsecase: GetClientsUsecase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClientsUiState())
@@ -30,29 +28,26 @@ class ClientsViewModel @Inject constructor(
             _uiState.update { state ->
                 result.fold(
                     onSuccess = { clients ->
+                        val photoMap = clients
+                            .mapNotNull { c -> c.profileImage?.let { url -> c.id to url } }
+                            .toMap()
                         state.copy(
                             clients = clients,
                             filteredClients = filterList(clients, state.searchQuery),
+                            clientPhotoUris = photoMap,
                             isLoading = false, error = null
                         )
                     },
                     onFailure = { e ->
                         state.copy(
                             clients = emptyList(), filteredClients = emptyList(),
+                            clientPhotoUris = emptyMap(),
                             isLoading = false, error = e.message ?: "Error al cargar clientes"
                         )
                     }
                 )
             }
-            loadClientPhotos()
         }
-    }
-
-    private suspend fun loadClientPhotos() {
-        val clients = _uiState.value.clients
-        if (clients.isEmpty()) return
-        val photoMap = getAllClientPhotosUseCase(clients.map { it.id })
-        _uiState.update { it.copy(clientPhotoUris = photoMap) }
     }
 
     fun onSearchQueryChange(query: String) {

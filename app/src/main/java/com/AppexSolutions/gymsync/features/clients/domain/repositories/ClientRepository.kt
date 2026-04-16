@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.domain.repositories
 
+import android.net.Uri
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Gym
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Rol
@@ -11,10 +12,11 @@ interface ClientRepository {
     /** Obtiene un usuario por ID */
     suspend fun getUserById(userId: Int): Client
 
-    /** Crea un usuario nuevo (POST /users/) */
+    /** Crea un usuario nuevo (POST /users/ multipart/form-data) */
     suspend fun createUser(
         nombres: String, apellidos: String, email: String, password: String,
-        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?
+        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?,
+        profileImageUri: Uri? = null
     ): Client
 
     /** Actualiza un usuario (PUT /users/:id) */

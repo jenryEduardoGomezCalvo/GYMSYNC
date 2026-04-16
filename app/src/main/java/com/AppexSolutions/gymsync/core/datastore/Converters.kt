@@ -14,4 +14,11 @@ class Converters {
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
     }
+
+    @TypeConverter
+    fun fromAnnouncementType(type: AnnouncementType): String = type.name
+
+    @TypeConverter
+    fun toAnnouncementType(value: String): AnnouncementType =
+        runCatching { AnnouncementType.valueOf(value) }.getOrDefault(AnnouncementType.GENERAL)
 }

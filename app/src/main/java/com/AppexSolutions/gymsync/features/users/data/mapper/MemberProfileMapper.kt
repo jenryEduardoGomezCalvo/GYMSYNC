@@ -16,6 +16,7 @@ fun Client.toMemberProfile(): MemberProfile {
         apellidos = apellidos,
         email = email,
         telefono = telefono,
+        profileImage = profileImage,
         currentPlan = assignedPlan,
         planStatus = status,
         nextPaymentDate = if (isActive) "10 Abril 2026" else "—",

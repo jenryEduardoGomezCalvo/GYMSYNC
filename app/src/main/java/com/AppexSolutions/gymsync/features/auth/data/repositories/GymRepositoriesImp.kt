@@ -7,8 +7,8 @@ import com.AppexSolutions.gymsync.features.auth.domain.entities.AuthSession
 import com.AppexSolutions.gymsync.features.auth.domain.entities.RegisterUser
 import com.AppexSolutions.gymsync.features.auth.domain.entities.User
 import com.AppexSolutions.gymsync.features.auth.domain.repositories.GymSyncRepositorie
-// Importa el DTO correcto para la creación
-import com.AppexSolutions.gymsync.features.clients.data.datasource.remote.model.CreateUserRequest
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class GymRepositoriesImp(
     private val gymApi: GymSyncAPI,
@@ -28,20 +28,20 @@ class GymRepositoriesImp(
     }
 
     override suspend fun RegisterUser(registerUser: RegisterUser): String {
-        // 1. Mapeamos los datos de la Entidad (Dominio) al Request de la API (Data)
-        val request = CreateUserRequest(
-            nombres = registerUser.nombres,
-            apellidos = registerUser.apellidos,
-            email = registerUser.email,
-            password = registerUser.password,
-            telefono = registerUser.telefono,
-            fechaNacimiento = registerUser.fechaNacimiento,
-            rolId = 4,
-            gymId = null,
-            activo = true
-        )
+        val asText = { s: String -> s.toRequestBody("text/plain".toMediaTypeOrNull()) }
 
-        val response = gymApi.createUser(request)
+        val response = gymApi.createUser(
+            nombres = asText(registerUser.nombres),
+            apellidos = asText(registerUser.apellidos),
+            email = asText(registerUser.email),
+            password = asText(registerUser.password),
+            rolId = asText("4"),
+            gymId = null,
+            telefono = registerUser.telefono?.let { asText(it) },
+            fechaNacimiento = registerUser.fechaNacimiento?.let { asText(it) },
+            activo = asText("true"),
+            profileImage = null
+        )
 
         if (response.success) {
             return response.message

@@ -21,12 +21,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.AppexSolutions.gymsync.features.notifications.presentation.UnreadAnnouncementsBadgeViewModel
 import com.AppexSolutions.gymsync.features.users.domain.entities.MemberProfile
 import com.AppexSolutions.gymsync.features.users.domain.entities.PlanStatus
 import com.AppexSolutions.gymsync.features.users.presentation.components.UserBottomNavBar
@@ -36,6 +40,7 @@ import com.AppexSolutions.gymsync.ui.theme.*
 @Composable
 fun UserHomeScreen(
     viewModel: UserViewModel = hiltViewModel(),
+    badgeViewModel: UnreadAnnouncementsBadgeViewModel = hiltViewModel(),
     onNavigateToPlans: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onTabSelected: (Int) -> Unit = {},
@@ -43,11 +48,12 @@ fun UserHomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
+    val unread by badgeViewModel.unreadCount.collectAsStateWithLifecycle()
 
-    val profile = uiState.profile ?: return
+    val profile = uiState.profile
 
     LaunchedEffect(profile) {
-        viewModel.generateQr()
+        if (profile != null) viewModel.generateQr()
     }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -79,66 +85,101 @@ fun UserHomeScreen(
         bottomBar = {
             UserBottomNavBar(
                 selectedTab = 0,
-                onTabSelected = onTabSelected
+                onTabSelected = onTabSelected,
+                unreadAnnouncements = unread
             )
         },
         containerColor = NavyBlue
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(NavyBlue)
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
         ) {
-            Spacer(Modifier.height(16.dp))
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = ElectricBlue
+                    )
+                }
+                uiState.error != null || profile == null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            uiState.error ?: "No se pudo cargar el perfil",
+                            color = Color(0xFF9CA3AF),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = viewModel::reload,
+                            colors = ButtonDefaults.buttonColors(containerColor = ElectricBlue)
+                        ) { Text("Reintentar") }
+                    }
+                }
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp)
+                    ) {
+                        Spacer(Modifier.height(16.dp))
 
-            // ── Header: Saludo + Avatar + Logout ──
-            HeaderSection(profile, onLogout = { showLogoutDialog = true })
+                        // ── Header: Saludo + Avatar + Logout ──
+                        HeaderSection(profile, onLogout = { showLogoutDialog = true })
 
-            Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(20.dp))
 
-            // ── Card del Plan Actual ──
-            CurrentPlanCard(profile, onUpgrade = onNavigateToPlans)
+                        // ── Card del Plan Actual ──
+                        CurrentPlanCard(profile, onUpgrade = onNavigateToPlans)
 
-            Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(20.dp))
 
-            // ── QR Code ──
-            QrCodeSection(qrBitmap)
+                        // ── QR Code ──
+                        QrCodeSection(qrBitmap)
 
-            Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(20.dp))
 
-            // ── Stats Row ──
-            StatsRow(profile.currentStreak, profile.monthlyVisits)
+                        // ── Stats Row ──
+                        StatsRow(profile.currentStreak, profile.monthlyVisits)
 
-            Spacer(Modifier.height(24.dp))
+                        Spacer(Modifier.height(24.dp))
 
-            // ── Acciones Rápidas ──
-            Text(
-                "ACCIONES RÁPIDAS",
-                style = MaterialTheme.typography.labelMedium,
-                color = TextMuted,
-                letterSpacing = 1.sp
-            )
-            Spacer(Modifier.height(12.dp))
+                        // ── Acciones Rápidas ──
+                        Text(
+                            "ACCIONES RÁPIDAS",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextMuted,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(Modifier.height(12.dp))
 
-            QuickActionItem(
-                icon = Icons.Default.CalendarMonth,
-                title = "Mis Clases",
-                subtitle = "Ver horario de clases"
-            )
-            QuickActionItem(
-                icon = Icons.Default.Receipt,
-                title = "Historial de Pagos",
-                subtitle = "Ver tus pagos anteriores"
-            )
-            QuickActionItem(
-                icon = Icons.Default.TrendingUp,
-                title = "Progreso",
-                subtitle = "Ver tu progreso y estadísticas"
-            )
+                        QuickActionItem(
+                            icon = Icons.Default.CalendarMonth,
+                            title = "Mis Clases",
+                            subtitle = "Ver horario de clases"
+                        )
+                        QuickActionItem(
+                            icon = Icons.Default.Receipt,
+                            title = "Historial de Pagos",
+                            subtitle = "Ver tus pagos anteriores"
+                        )
+                        QuickActionItem(
+                            icon = Icons.Default.TrendingUp,
+                            title = "Progreso",
+                            subtitle = "Ver tu progreso y estadísticas"
+                        )
 
-            Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
+                    }
+                }
+            }
         }
     }
 }
@@ -183,18 +224,30 @@ private fun HeaderSection(profile: MemberProfile, onLogout: () -> Unit = {}) {
                 .size(52.dp)
                 .clip(CircleShape)
                 .background(
-                    Brush.linearGradient(
-                        colors = listOf(ElectricBlue, BrightBlue)
-                    )
+                    Brush.linearGradient(colors = listOf(ElectricBlue, BrightBlue))
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                profile.inicial,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
+            if (profile.profileImage != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profile.profileImage)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(
+                    profile.inicial,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
         }
     }
 }

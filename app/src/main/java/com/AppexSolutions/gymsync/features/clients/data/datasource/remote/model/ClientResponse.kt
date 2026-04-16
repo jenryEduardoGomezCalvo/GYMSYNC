@@ -41,7 +41,18 @@ data class ClientDto(
     val gym: GymDto?,
 
     val createdAt: String?,
-    val updatedAt: String?
+    val updatedAt: String?,
+
+    // Campos opcionales para el sistema de broadcast FCM.
+    // Nullables por compat: si el backend aún no los expone, la deserialización no falla.
+    @SerializedName("fcm_token")
+    val fcmToken: String? = null,
+
+    @SerializedName("receives_notifications")
+    val receivesNotifications: Boolean? = null,
+
+    @SerializedName("profile_image")
+    val profileImage: String? = null
 )
 
 data class RolDto(

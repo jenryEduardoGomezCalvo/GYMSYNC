@@ -1,7 +1,9 @@
 package com.AppexSolutions.gymsync.features.notifications.domain.usecases
 
 import android.util.Log
+import com.AppexSolutions.gymsync.core.datastore.AnnouncementType
 import com.AppexSolutions.gymsync.core.datastore.UserDao
+import com.AppexSolutions.gymsync.features.notifications.domain.repository.AnnouncementRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -10,7 +12,8 @@ import javax.inject.Singleton
 
 @Singleton
 class ProcessFcmMessageUseCase @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val announcementRepository: AnnouncementRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -95,25 +98,41 @@ class ProcessFcmMessageUseCase @Inject constructor(
     }
 
     /**
-     * Maneja anuncios del gimnasio.
-     * Guarda en tabla de anuncios para historial si existe.
+     * Maneja anuncios del gimnasio recibidos por FCM.
+     * Persiste el anuncio en Room para que aparezca en la pantalla del cliente
+     * y alimente el badge de no leídos en el BottomNav.
+     *
+     * Claves esperadas en `data`:
+     *  - announcementTitle (obligatoria)
+     *  - announcementBody  (obligatoria)
+     *  - announcementType  (opcional: GENERAL | URGENTE | PROMOCION; default GENERAL)
+     *  - sentAt            (opcional: epoch millis; default now)
+     *  - sentBy            (opcional: nombre/email del admin; default "Gimnasio")
      */
     fun handleAnnouncement(data: Map<String, String>) {
-        val announcementId = data["announcementId"] ?: return
-        val title = data["announcementTitle"] ?: "Anuncio"
-        val body = data["announcementBody"] ?: ""
-        val gymId = data["gymId"]
+        val title = data["announcementTitle"] ?: data["title"] ?: "Anuncio"
+        val body = data["announcementBody"] ?: data["message"] ?: ""
+        if (body.isBlank()) return
+
+        val type = runCatching {
+            AnnouncementType.valueOf(
+                (data["announcementType"] ?: data["type"] ?: "GENERAL").uppercase()
+            )
+        }.getOrDefault(AnnouncementType.GENERAL)
+
+        val sentAt = data["sentAt"]?.toLongOrNull() ?: System.currentTimeMillis()
+        val sentBy = data["sentBy"] ?: "Gimnasio"
 
         scope.launch {
             try {
-                // Guardar en tabla de anuncios para historial
-                // TODO: Crear tabla de anuncios si se requiere historial
-                Log.d(TAG, """
-                    Anuncio recibido:
-                    - ID: $announcementId
-                    - Título: $title
-                    - Gym: $gymId
-                """.trimIndent())
+                announcementRepository.persistReceivedAnnouncement(
+                    title = title,
+                    message = body,
+                    type = type,
+                    sentAt = sentAt,
+                    sentBy = sentBy
+                )
+                Log.d(TAG, "Anuncio persistido: $title ($type)")
             } catch (e: Exception) {
                 Log.e(TAG, "Error guardando anuncio", e)
             }

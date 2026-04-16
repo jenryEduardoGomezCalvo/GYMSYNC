@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 fun UserBottomNavBar(
     selectedTab: Int = 0,
     onTabSelected: (Int) -> Unit = {},
+    unreadAnnouncements: Int = 0,
     modifier: Modifier = Modifier
 ) {
     NavigationBar(
@@ -114,6 +116,39 @@ fun UserBottomNavBar(
             label = { Text("Progreso") },
             selected = selectedTab == 4,
             onClick = { onTabSelected(4) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        )
+
+        NavigationBarItem(
+            icon = {
+                BadgedBox(
+                    badge = {
+                        if (unreadAnnouncements > 0) {
+                            Badge {
+                                Text(
+                                    if (unreadAnnouncements > 99) "99+"
+                                    else unreadAnnouncements.toString()
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = "Avisos",
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            },
+            label = { Text("Avisos") },
+            selected = selectedTab == 5,
+            onClick = { onTabSelected(5) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = MaterialTheme.colorScheme.primary,

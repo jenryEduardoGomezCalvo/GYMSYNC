@@ -1,7 +1,7 @@
 package com.AppexSolutions.gymsync.features.notifications.domain.usecases
 
 import android.util.Log
-import com.AppexSolutions.gymsync.core.datastore.UserDao
+import com.AppexSolutions.gymsync.features.notifications.domain.repository.FcmRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 @Singleton
 class UpdateFcmTokenUseCase @Inject constructor(
-    private val userDao: UserDao
+    private val fcmRepository: FcmRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -19,24 +19,16 @@ class UpdateFcmTokenUseCase @Inject constructor(
     }
 
     /**
-     * Envía el token FCM al backend para asociarlo con el usuario.
-     * Se ejecuta cada vez que FCM genera un nuevo token.
+     * Envía el token FCM al backend para asociarlo con el usuario autenticado.
+     * Se llama desde onNewToken() (token rotado por Firebase) y desde InitializeFcmUseCase
+     * (post-login para garantizar que el token esté registrado).
      */
     operator fun invoke(token: String) {
+        Log.d(TAG, "Registrando nuevo token FCM: ${token.take(20)}...")
         scope.launch {
-            try {
-                // Guardar token localmente
-                val user = userDao.getUserWithFcmToken()
-                user?.let {
-                    userDao.updateFcmToken(it.email, token)
-                    Log.d(TAG, "Token FCM actualizado para: ${it.email}")
-                }
-
-                // Aquí se enviaría al backend
-                // userRepository.updateFcmToken(token)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error actualizando token FCM", e)
-            }
+            fcmRepository.updateFcmToken(token)
+                .onSuccess { Log.d(TAG, "Token FCM enviado al backend correctamente") }
+                .onFailure { Log.e(TAG, "Error enviando token FCM al backend", it) }
         }
     }
 }

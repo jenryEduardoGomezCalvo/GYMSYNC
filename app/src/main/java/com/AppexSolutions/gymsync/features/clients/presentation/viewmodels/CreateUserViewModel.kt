@@ -10,7 +10,6 @@ import com.AppexSolutions.gymsync.core.util.formatToIsoTimestamp
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.CreateUserUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetGymsUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetRolesUseCase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.SaveProfilePhotoUseCase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,8 +22,7 @@ import javax.inject.Inject
 class CreateUserViewModel @Inject constructor(
     private val createUserUseCase: CreateUserUseCase,
     private val getRolesUseCase: GetRolesUseCase,
-    private val getGymsUseCase: GetGymsUseCase,
-    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase
+    private val getGymsUseCase: GetGymsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUserUiState())
@@ -32,21 +30,23 @@ class CreateUserViewModel @Inject constructor(
 
     init { loadRolesAndGyms() }
 
-    private fun loadRolesAndGyms() {
+    fun loadRolesAndGyms() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val rolesResult = getRolesUseCase()
-                val gymsResult = getGymsUseCase()
-                _uiState.update { state ->
-                    state.copy(
-                        roles = rolesResult.getOrDefault(emptyList()),
-                        gyms = gymsResult.getOrDefault(emptyList()),
-                        isLoading = false
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            val rolesResult = getRolesUseCase()
+            val gymsResult = getGymsUseCase()
+
+            val errorMsg = rolesResult.exceptionOrNull()?.let { "Error cargando roles: ${it.message}" }
+                ?: gymsResult.exceptionOrNull()?.let { "Error cargando gimnasios: ${it.message}" }
+
+            _uiState.update { state ->
+                state.copy(
+                    roles = rolesResult.getOrDefault(emptyList()),
+                    gyms = gymsResult.getOrDefault(emptyList()),
+                    isLoading = false,
+                    error = errorMsg
+                )
             }
         }
     }
@@ -97,12 +97,9 @@ class CreateUserViewModel @Inject constructor(
                 telefono = s.telefono.takeIf { it.isNotBlank() },
                 fechaNacimiento = isoFechaNacimiento,
                 rolId = s.selectedRolId!!,
-                gymId = s.selectedGymId
-            ).onSuccess { createdClient ->
-                val photoUri = _uiState.value.profileImageUri
-                if (photoUri != null) {
-                    saveProfilePhotoUseCase.invoke(createdClient.id, photoUri)
-                }
+                gymId = s.selectedGymId,
+                profileImageUri = s.profileImageUri
+            ).onSuccess {
                 _uiState.update { it.copy(isSaving = false, successMessage = "Creado con éxito") }
             }.onFailure { e ->
                 _uiState.update { it.copy(isSaving = false, error = e.message ?: "Error de red") }

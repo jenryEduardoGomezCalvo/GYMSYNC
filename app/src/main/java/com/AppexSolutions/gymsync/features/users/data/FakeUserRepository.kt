@@ -45,6 +45,7 @@ class FakeUserRepository {
         1 to MemberProfile(
             id = 1, nombres = "Sofía", apellidos = "Martínez",
             email = "sofia@gym.com", telefono = "555-1234",
+            profileImage = null,
             currentPlan = "Premium", planStatus = PlanStatus.ACTIVO,
             nextPaymentDate = "10 Abril 2026", daysRemaining = 28,
             currentStreak = 12, monthlyVisits = 18,
@@ -53,6 +54,7 @@ class FakeUserRepository {
         2 to MemberProfile(
             id = 2, nombres = "Carlos", apellidos = "López",
             email = "carlos@gym.com", telefono = "555-5678",
+            profileImage = null,
             currentPlan = "Pro", planStatus = PlanStatus.ACTIVO,
             nextPaymentDate = "25 Marzo 2026", daysRemaining = 7,
             currentStreak = 5, monthlyVisits = 10,
@@ -61,6 +63,7 @@ class FakeUserRepository {
         3 to MemberProfile(
             id = 3, nombres = "María", apellidos = "García",
             email = "maria@gym.com", telefono = "555-9012",
+            profileImage = null,
             currentPlan = "Ultimate", planStatus = PlanStatus.ACTIVO,
             nextPaymentDate = "5 Mayo 2026", daysRemaining = 48,
             currentStreak = 30, monthlyVisits = 22,
@@ -69,6 +72,7 @@ class FakeUserRepository {
         4 to MemberProfile(
             id = 4, nombres = "Diego", apellidos = "Hernández",
             email = "diego@gym.com", telefono = "555-3456",
+            profileImage = null,
             currentPlan = "Pro", planStatus = PlanStatus.VENCIDO,
             nextPaymentDate = "—", daysRemaining = 0,
             currentStreak = 0, monthlyVisits = 0,

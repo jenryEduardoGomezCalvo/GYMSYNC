@@ -1,5 +1,6 @@
 package com.AppexSolutions.gymsync.features.clients.domain.usecases
 
+import android.net.Uri
 import com.AppexSolutions.gymsync.features.clients.domain.entities.Client
 import com.AppexSolutions.gymsync.features.clients.domain.repositories.ClientRepository
 import javax.inject.Inject
@@ -7,8 +8,15 @@ import javax.inject.Inject
 class CreateUserUseCase @Inject constructor(private val repository: ClientRepository) {
     suspend operator fun invoke(
         nombres: String, apellidos: String, email: String, password: String,
-        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?
+        telefono: String?, fechaNacimiento: String?, rolId: Int, gymId: Int?,
+        profileImageUri: Uri? = null
     ): Result<Client> = try {
-        Result.success(repository.createUser(nombres, apellidos, email, password, telefono, fechaNacimiento, rolId, gymId))
+        Result.success(
+            repository.createUser(
+                nombres, apellidos, email, password,
+                telefono, fechaNacimiento, rolId, gymId,
+                profileImageUri
+            )
+        )
     } catch (e: Exception) { Result.failure(e) }
 }

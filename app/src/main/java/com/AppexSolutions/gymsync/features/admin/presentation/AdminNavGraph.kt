@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminAnnouncementHistory
+import com.AppexSolutions.gymsync.features.admin.navigation.AdminAnnouncements
 import com.AppexSolutions.gymsync.features.admin.navigation.AdminDashboard
 import com.AppexSolutions.gymsync.features.admin.navigation.AdminScanner
 import com.AppexSolutions.gymsync.features.admin.navigation.AdminClients
@@ -18,8 +20,10 @@ import com.AppexSolutions.gymsync.features.admin.navigation.AdminCreateUser
 import com.AppexSolutions.gymsync.features.admin.navigation.AdminEditClient
 import com.AppexSolutions.gymsync.features.admin.presentation.components.AdminBottomNavBar
 import com.AppexSolutions.gymsync.features.admin.presentation.components.AdminTab
+import com.AppexSolutions.gymsync.features.admin.presentation.screens.AnnouncementHistoryScreen
 import com.AppexSolutions.gymsync.features.admin.presentation.screens.DashboardScreen
 import com.AppexSolutions.gymsync.features.admin.presentation.screens.ScannerScreen
+import com.AppexSolutions.gymsync.features.admin.presentation.screens.SendAnnouncementScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.ClientsScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.CreateUserScreen
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientScreen
@@ -33,10 +37,12 @@ fun AdminNavGraph(
     val currentRoute = currentBackStack?.destination?.route
 
     val selectedTab = when {
-        currentRoute?.endsWith("AdminDashboard") == true -> AdminTab.Dashboard.index
-        currentRoute?.endsWith("AdminScanner") == true   -> AdminTab.Scanner.index
-        currentRoute?.endsWith("AdminClients") == true   -> AdminTab.Clients.index
-        else                                             -> AdminTab.Dashboard.index
+        currentRoute?.endsWith("AdminDashboard") == true      -> AdminTab.Dashboard.index
+        currentRoute?.endsWith("AdminScanner") == true        -> AdminTab.Scanner.index
+        currentRoute?.endsWith("AdminClients") == true        -> AdminTab.Clients.index
+        currentRoute?.endsWith("AdminAnnouncements") == true ||
+        currentRoute?.endsWith("AdminAnnouncementHistory") == true -> AdminTab.Announcements.index
+        else                                                  -> AdminTab.Dashboard.index
     }
 
     Scaffold(
@@ -44,11 +50,12 @@ fun AdminNavGraph(
             AdminBottomNavBar(
                 selectedTab = selectedTab,
                 onTabSelected = { tabIndex ->
-                    val route = when (tabIndex) {
-                        AdminTab.Dashboard.index -> AdminDashboard
-                        AdminTab.Scanner.index   -> AdminScanner
-                        AdminTab.Clients.index   -> AdminClients
-                        else                     -> AdminDashboard
+                    val route: Any = when (tabIndex) {
+                        AdminTab.Dashboard.index     -> AdminDashboard
+                        AdminTab.Scanner.index       -> AdminScanner
+                        AdminTab.Clients.index       -> AdminClients
+                        AdminTab.Announcements.index -> AdminAnnouncements
+                        else                         -> AdminDashboard
                     }
                     navController.navigate(route) {
                         popUpTo<AdminDashboard> { saveState = true }
@@ -114,6 +121,21 @@ fun AdminNavGraph(
             // ── Editar cliente ──
             composable<AdminEditClient> {
                 EditClientScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Enviar anuncio ──
+            composable<AdminAnnouncements> {
+                SendAnnouncementScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onOpenHistory = { navController.navigate(AdminAnnouncementHistory) }
+                )
+            }
+
+            // ── Historial de anuncios ──
+            composable<AdminAnnouncementHistory> {
+                AnnouncementHistoryScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

@@ -44,7 +44,8 @@ class AuthRepositoryImpl @Inject constructor(
                         name = name.ifBlank { email },
                         token = token,
                         biometricEnabled = existing?.biometricEnabled ?: false,
-                        lastLogin = Date()
+                        lastLogin = Date(),
+                        backendId = userId
                     )
                 )
 

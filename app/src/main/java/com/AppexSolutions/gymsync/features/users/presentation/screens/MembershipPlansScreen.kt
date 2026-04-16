@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.AppexSolutions.gymsync.features.notifications.presentation.UnreadAnnouncementsBadgeViewModel
 import com.AppexSolutions.gymsync.features.users.domain.entities.MembershipPlan
 import com.AppexSolutions.gymsync.features.users.domain.entities.PlanIcon
 import com.AppexSolutions.gymsync.features.users.presentation.components.UserBottomNavBar
@@ -29,9 +30,11 @@ import com.AppexSolutions.gymsync.ui.theme.*
 @Composable
 fun MembershipPlansScreen(
     viewModel: UserViewModel = hiltViewModel(),
+    badgeViewModel: UnreadAnnouncementsBadgeViewModel = hiltViewModel(),
     onTabSelected: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val unread by badgeViewModel.unreadCount.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -51,7 +54,8 @@ fun MembershipPlansScreen(
         bottomBar = {
             UserBottomNavBar(
                 selectedTab = 1,
-                onTabSelected = onTabSelected
+                onTabSelected = onTabSelected,
+                unreadAnnouncements = unread
             )
         },
         containerColor = NavyBlue

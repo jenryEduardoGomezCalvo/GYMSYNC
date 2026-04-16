@@ -23,7 +23,13 @@ class CreateRoutineViewModel @Inject constructor(
         val notificationMinute: Int = 0,
         val isSaving: Boolean = false,
         val savedRoutineId: Int? = null,
-        val error: String? = null
+        val error: String? = null,
+        /**
+         * true cuando la rutina se guardó correctamente pero el OS no concedió
+         * permiso de alarma exacta (Android 12+). La notificación llegará dentro
+         * de ~10 minutos, no exactamente a la hora elegida.
+         */
+        val inexactAlarmWarning: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -41,6 +47,8 @@ class CreateRoutineViewModel @Inject constructor(
     fun setNotificationTime(hour: Int, minute: Int) =
         _uiState.update { it.copy(notificationHour = hour, notificationMinute = minute) }
 
+    fun dismissInexactWarning() = _uiState.update { it.copy(inexactAlarmWarning = false) }
+
     fun save(userId: Int) {
         val state = _uiState.value
         if (state.name.isBlank() || state.selectedDays.isEmpty()) return
@@ -48,14 +56,20 @@ class CreateRoutineViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
-                val id = createRoutineUseCase(
+                val result = createRoutineUseCase(
                     name = state.name,
                     userId = userId,
                     days = state.selectedDays.sorted(),
                     notificationHour = state.notificationHour,
                     notificationMinute = state.notificationMinute
                 )
-                _uiState.update { it.copy(isSaving = false, savedRoutineId = id) }
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        savedRoutineId = result.routineId,
+                        inexactAlarmWarning = !result.exactAlarmScheduled
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, error = e.message) }
             }

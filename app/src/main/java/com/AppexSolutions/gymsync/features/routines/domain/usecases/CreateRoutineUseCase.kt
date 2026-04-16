@@ -4,6 +4,13 @@ import com.AppexSolutions.gymsync.features.routines.domain.entities.Routine
 import com.AppexSolutions.gymsync.features.routines.domain.repositories.RoutineRepository
 import javax.inject.Inject
 
+/** Resultado de crear una rutina. */
+data class CreateRoutineResult(
+    val routineId: Int,
+    /** true = alarma exacta programada; false = alarma inexacta o sin permiso */
+    val exactAlarmScheduled: Boolean
+)
+
 class CreateRoutineUseCase @Inject constructor(
     private val repository: RoutineRepository,
     private val scheduleAlarms: ScheduleRoutineAlarmsUseCase
@@ -14,7 +21,7 @@ class CreateRoutineUseCase @Inject constructor(
         days: List<Int>,
         notificationHour: Int,
         notificationMinute: Int
-    ): Int {
+    ): CreateRoutineResult {
         val routine = Routine(
             id = 0,
             userId = userId,
@@ -26,7 +33,7 @@ class CreateRoutineUseCase @Inject constructor(
             createdAt = System.currentTimeMillis()
         )
         val id = repository.createRoutine(routine)
-        scheduleAlarms(routine.copy(id = id))
-        return id
+        val exactAlarm = scheduleAlarms(routine.copy(id = id))
+        return CreateRoutineResult(routineId = id, exactAlarmScheduled = exactAlarm)
     }
 }

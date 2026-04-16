@@ -57,7 +57,14 @@ class UserLoginViewModel @Inject constructor(
                             biometricAuthManager.isBiometricEnrolled() &&
                             !hasMemberBiometricSessionUseCase()
 
-                    val clientId = (session.id_user as? Number)?.toInt() ?: 0
+                    val clientId = when (val raw = session.id_user) {
+                        is Int -> raw
+                        is Long -> raw.toInt()
+                        is Double -> raw.toInt()
+                        is Number -> raw.toInt()
+                        else -> raw.toString().toIntOrNull() ?: 0
+                    }
+                    android.util.Log.d("UserLoginVM", "Login OK → clientId=$clientId roleName=${session.roleName}")
 
                     _uiState.update {
                         it.copy(

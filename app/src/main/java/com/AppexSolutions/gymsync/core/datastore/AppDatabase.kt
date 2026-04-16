@@ -28,9 +28,10 @@ import com.AppexSolutions.gymsync.features.routines.data.local.entity.RoutineHis
         RoutineDayEntity::class,
         RoutineExerciseEntity::class,
         RoutineHistoryEntity::class,
-        ProgressEntryEntity::class
+        ProgressEntryEntity::class,
+        AnnouncementEntity::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -48,6 +49,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     // Progreso físico
     abstract fun progressDao(): ProgressDao
+
+    // Anuncios broadcast FCM
+    abstract fun announcementDao(): AnnouncementDao
 
     companion object {
         /** Migración v1 → v2: agrega tabla de fotos de perfil de clientes */
@@ -136,6 +140,46 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "ALTER TABLE client_profile_photos ADD COLUMN photo_url TEXT"
+                )
+            }
+        }
+
+        /**
+         * Migración v8 → v9:
+         * - Crea tabla `announcements` para persistir anuncios broadcast FCM.
+         * - Agrega columna `receives_notifications` a `users` (default 1 = suscrito).
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS announcements (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        title TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        sent_at INTEGER NOT NULL,
+                        sent_by TEXT NOT NULL,
+                        recipient_count INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        is_read INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "ALTER TABLE users ADD COLUMN receives_notifications INTEGER NOT NULL DEFAULT 1"
+                )
+            }
+        }
+
+        /**
+         * Migración v9 → v10:
+         * - Agrega columna `backend_id` a `users` (ID del usuario en el servidor).
+         *   Necesario para enviar el token FCM al endpoint PATCH /users/{id}/fcm-token.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE users ADD COLUMN backend_id INTEGER NOT NULL DEFAULT 0"
                 )
             }
         }

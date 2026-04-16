@@ -6,8 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.DeleteClientUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetClientByIdUseCase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.GetProfilePhotoUseCase
-import com.AppexSolutions.gymsync.features.clients.domain.usecases.SaveProfilePhotoUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.ToggleUserActiveUseCase
 import com.AppexSolutions.gymsync.features.clients.domain.usecases.UpdateClientUseCase
 import com.AppexSolutions.gymsync.features.clients.presentation.screens.EditClientUiState
@@ -24,9 +22,7 @@ class EditClientViewModel @Inject constructor(
     private val getClientByIdUseCase: GetClientByIdUseCase,
     private val updateClientUseCase: UpdateClientUseCase,
     private val deleteClientUseCase: DeleteClientUseCase,
-    private val toggleUserActiveUseCase: ToggleUserActiveUseCase,
-    private val saveProfilePhotoUseCase: SaveProfilePhotoUseCase,
-    private val getProfilePhotoUseCase: GetProfilePhotoUseCase
+    private val toggleUserActiveUseCase: ToggleUserActiveUseCase
 ) : ViewModel() {
 
     private val clientId: Int = savedStateHandle["clientId"] ?: 0
@@ -34,10 +30,7 @@ class EditClientViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(EditClientUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        loadClient()
-        loadProfilePhoto()
-    }
+    init { loadClient() }
 
     private fun loadClient() {
         viewModelScope.launch {
@@ -54,6 +47,7 @@ class EditClientViewModel @Inject constructor(
                             telefono = client.telefono ?: "",
                             fechaNacimiento = client.fechaNacimiento ?: "",
                             activo = client.activo,
+                            profileImageUri = client.profileImage?.let { Uri.parse(it) },
                             isLoading = false
                         )
                     },
@@ -73,33 +67,6 @@ class EditClientViewModel @Inject constructor(
 
     fun onProfileImageSelected(uri: Uri) {
         _uiState.update { it.copy(profileImageUri = uri) }
-        viewModelScope.launch {
-            val result = saveProfilePhotoUseCase.invoke(clientId, uri)
-            result.fold(
-                onSuccess = { publicUrl ->
-                    val cacheBustedUrl = "$publicUrl?t=${System.currentTimeMillis()}"
-                    _uiState.update { it.copy(profileImageUri = Uri.parse(cacheBustedUrl)) }
-                },
-                onFailure = { e ->
-                    _uiState.update { it.copy(error = "Error al subir foto: ${e.message}") }
-                }
-            )
-        }
-    }
-
-    private fun loadProfilePhoto() {
-        viewModelScope.launch {
-            getProfilePhotoUseCase.invoke(clientId).onSuccess { photoRef ->
-                if (photoRef != null) {
-                    val uri = if (photoRef.startsWith("http")) {
-                        Uri.parse("$photoRef?t=${System.currentTimeMillis()}")
-                    } else {
-                        Uri.fromFile(java.io.File(photoRef))
-                    }
-                    _uiState.update { it.copy(profileImageUri = uri) }
-                }
-            }
-        }
     }
 
     fun saveChanges() {

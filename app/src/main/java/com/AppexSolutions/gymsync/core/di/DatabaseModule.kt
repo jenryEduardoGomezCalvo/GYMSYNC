@@ -2,11 +2,10 @@ package com.AppexSolutions.gymsync.core.di
 
 import android.content.Context
 import androidx.room.Room
+import com.AppexSolutions.gymsync.core.datastore.AnnouncementDao
 import com.AppexSolutions.gymsync.core.datastore.AppDatabase
 import com.AppexSolutions.gymsync.core.datastore.AttendanceDao
-import com.AppexSolutions.gymsync.core.datastore.ProfilePhotoDao
 import com.AppexSolutions.gymsync.core.datastore.UserDao
-import com.AppexSolutions.gymsync.core.datastore.camera.CameraDataSource
 import com.AppexSolutions.gymsync.features.routines.data.local.dao.ExerciseDao
 import com.AppexSolutions.gymsync.features.routines.data.local.dao.RoutineDao
 import com.AppexSolutions.gymsync.features.routines.data.local.dao.RoutineDayDao
@@ -39,7 +38,9 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_4_5,
                 AppDatabase.MIGRATION_5_6,
                 AppDatabase.MIGRATION_6_7,
-                AppDatabase.MIGRATION_7_8
+                AppDatabase.MIGRATION_7_8,
+                AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10
             )
             .build()
     }
@@ -52,20 +53,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideProfilePhotoDao(database: AppDatabase): ProfilePhotoDao {
-        return database.profilePhotoDao()
-    }
-
-    @Provides
-    @Singleton
     fun provideAttendanceDao(database: AppDatabase): AttendanceDao {
         return database.attendanceDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideCameraDataSource(@ApplicationContext context: Context): CameraDataSource {
-        return CameraDataSource(context)
     }
 
     // DAOs de Rutinas
@@ -87,4 +76,8 @@ object DatabaseModule {
     // DAO de Progreso físico
     @Provides @Singleton
     fun provideProgressDao(db: AppDatabase): ProgressDao = db.progressDao()
+
+    // DAO de Anuncios broadcast FCM
+    @Provides @Singleton
+    fun provideAnnouncementDao(db: AppDatabase): AnnouncementDao = db.announcementDao()
 }

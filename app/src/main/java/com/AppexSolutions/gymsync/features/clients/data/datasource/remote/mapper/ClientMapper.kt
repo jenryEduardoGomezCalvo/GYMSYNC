@@ -18,7 +18,8 @@ fun ClientDto.toDomain(): Client = Client(
     rolId = rolId,
     rolNombre = rol?.nombre ?: "desconocido",
     gymId = gymId,
-    gymNombre = gym?.nombre
+    gymNombre = gym?.nombre,
+    profileImage = profileImage
 )
 
 fun RolDto.toDomain(): Rol = Rol(id = id, nombre = nombre, descripcion = descripcion)

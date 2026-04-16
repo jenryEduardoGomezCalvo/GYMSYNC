@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -147,7 +148,10 @@ fun RoutinesScreen(
                             RoutineCard(
                                 routine = routine,
                                 onClick = { onNavigateToDetail(routine.id) },
-                                onDelete = { viewModel.deleteRoutine(routine.id) }
+                                onDelete = { viewModel.deleteRoutine(routine.id) },
+                                onTestNotification = {
+                                    viewModel.scheduleTestNotification(routine.id, routine.name)
+                                }
                             )
                         }
                         // Bottom padding so FAB doesn't overlap last card
@@ -163,7 +167,8 @@ fun RoutinesScreen(
 private fun RoutineCard(
     routine: Routine,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onTestNotification: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -218,6 +223,17 @@ private fun RoutineCard(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
+                IconButton(
+                    onClick = onTestNotification,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NotificationsActive,
+                        contentDescription = "Probar notificación",
+                        tint = AccentLight,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier.size(36.dp)

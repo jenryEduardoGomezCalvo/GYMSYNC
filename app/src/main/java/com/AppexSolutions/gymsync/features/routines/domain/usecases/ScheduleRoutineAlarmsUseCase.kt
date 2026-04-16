@@ -7,5 +7,8 @@ import javax.inject.Inject
 class ScheduleRoutineAlarmsUseCase @Inject constructor(
     private val scheduler: RoutineAlarmScheduler
 ) {
-    operator fun invoke(routine: Routine) = scheduler.schedule(routine)
+    /**
+     * @return true si se programó alarma exacta, false si se usó fallback inexacto.
+     */
+    operator fun invoke(routine: Routine): Boolean = scheduler.schedule(routine)
 }

@@ -1,5 +1,8 @@
 package com.AppexSolutions.gymsync.features.routines.presentation.screens
 
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -42,8 +45,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.AppexSolutions.gymsync.features.routines.presentation.viewmodels.CreateRoutineViewModel
@@ -57,11 +62,51 @@ fun CreateRoutineScreen(
     viewModel: CreateRoutineViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    LaunchedEffect(uiState.savedRoutineId) {
-        if (uiState.savedRoutineId != null) {
+    // Navegar solo cuando NO hay advertencia de alarma inexacta pendiente
+    LaunchedEffect(uiState.savedRoutineId, uiState.inexactAlarmWarning) {
+        if (uiState.savedRoutineId != null && !uiState.inexactAlarmWarning) {
             onRoutineCreated(uiState.savedRoutineId!!)
         }
+    }
+
+    // Diálogo de aviso: alarma inexacta por falta de permiso
+    if (uiState.inexactAlarmWarning) {
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.dismissInexactWarning()
+                uiState.savedRoutineId?.let { onRoutineCreated(it) }
+            },
+            title = { Text("Notificaciones con retraso") },
+            text = {
+                Text(
+                    "La rutina se creó correctamente, pero este dispositivo no tiene " +
+                    "permiso para programar alarmas exactas.\n\n" +
+                    "Las notificaciones podrían aparecer hasta 10 minutos tarde.\n\n" +
+                    "Para obtener notificaciones puntuales, concede el permiso en Ajustes."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    // Abre la pantalla del sistema para conceder SCHEDULE_EXACT_ALARM
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        context.startActivity(
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }
+                    viewModel.dismissInexactWarning()
+                    uiState.savedRoutineId?.let { onRoutineCreated(it) }
+                }) { Text("Ir a Ajustes") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.dismissInexactWarning()
+                    uiState.savedRoutineId?.let { onRoutineCreated(it) }
+                }) { Text("Continuar igual") }
+            }
+        )
     }
 
     var showTimePicker by remember { mutableStateOf(false) }

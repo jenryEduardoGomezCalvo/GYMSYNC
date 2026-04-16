@@ -106,7 +106,7 @@ fun CreateUserScreen(
                         items = uiState.roles.map { it.id to it.nombre },
                         selectedId = uiState.selectedRolId,
                         onSelected = viewModel::onRolSelected,
-                        placeholder = "Selecciona un rol"
+                        placeholder = if (uiState.roles.isEmpty()) "Sin roles disponibles — reintenta" else "Selecciona un rol"
                     )
                     Spacer(Modifier.height(16.dp))
 
@@ -116,8 +116,16 @@ fun CreateUserScreen(
                         items = uiState.gyms.map { it.id to it.nombre },
                         selectedId = uiState.selectedGymId,
                         onSelected = { viewModel.onGymSelected(it) },
-                        placeholder = "Selecciona un gimnasio (opcional)"
+                        placeholder = if (uiState.gyms.isEmpty()) "Sin gimnasios disponibles — reintenta" else "Selecciona un gimnasio (opcional)"
                     )
+
+                    // Botón de reintento si alguna lista cargó vacía
+                    if (uiState.roles.isEmpty() || uiState.gyms.isEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = viewModel::loadRolesAndGyms) {
+                            Text("↻ Reintentar cargar roles/gimnasios", color = Color(0xFF60A5FA), fontSize = 13.sp)
+                        }
+                    }
                     Spacer(Modifier.height(32.dp))
 
                     // Botón crear

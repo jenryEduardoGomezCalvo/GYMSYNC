@@ -6,6 +6,7 @@ data class MemberProfile(
     val apellidos: String,
     val email: String,
     val telefono: String?,
+    val profileImage: String?,
     val currentPlan: String,
     val planStatus: PlanStatus,
     val nextPaymentDate: String,

@@ -7,3 +7,5 @@ import kotlinx.serialization.Serializable
 @Serializable object AdminClients
 @Serializable object AdminCreateUser
 @Serializable data class AdminEditClient(val clientId: Int)
+@Serializable object AdminAnnouncements
+@Serializable object AdminAnnouncementHistory

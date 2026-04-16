@@ -12,6 +12,7 @@ import com.AppexSolutions.gymsync.features.auth.presentation.screens.RoleSelecti
 import com.AppexSolutions.gymsync.features.auth.presentation.screens.UserLoginScreen
 import com.AppexSolutions.gymsync.features.progress.presentation.screens.AddProgressEntryScreen
 import com.AppexSolutions.gymsync.features.progress.presentation.screens.ProgressDashboardScreen
+import com.AppexSolutions.gymsync.features.notifications.presentation.NotificationsScreen
 import com.AppexSolutions.gymsync.features.progress.presentation.screens.ProgressHistoryScreen
 import com.AppexSolutions.gymsync.features.routines.navigation.routinesNavGraph
 import com.AppexSolutions.gymsync.features.users.presentation.screens.MembershipPlansScreen
@@ -83,11 +84,31 @@ fun AppNavigation(
                         2 -> { /* perfil */ }
                         3 -> navController.navigate(Routines(clientId))
                         4 -> navController.navigate(ProgressDashboard(clientId))
+                        5 -> navController.navigate(Notifications(clientId))
                     }
                 },
                 onLogout = {
                     navController.navigate(RoleSelection) {
                         popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ── Notificaciones (Avisos del cliente) ──
+        composable<Notifications> { backStackEntry ->
+            val clientId = backStackEntry.toRoute<Notifications>().clientId
+            NotificationsScreen(
+                onTabSelected = { tabIndex ->
+                    when (tabIndex) {
+                        0 -> navController.navigate(UserHome(clientId)) {
+                            popUpTo<Notifications> { inclusive = true }
+                        }
+                        1 -> navController.navigate(MembershipPlans(clientId))
+                        2 -> { /* perfil */ }
+                        3 -> navController.navigate(Routines(clientId))
+                        4 -> navController.navigate(ProgressDashboard(clientId))
+                        5 -> { /* ya estamos */ }
                     }
                 }
             )
@@ -106,6 +127,7 @@ fun AppNavigation(
                         2 -> { /* perfil */ }
                         3 -> navController.navigate(Routines(clientId))
                         4 -> navController.navigate(ProgressDashboard(clientId))
+                        5 -> navController.navigate(Notifications(clientId))
                     }
                 }
             )
@@ -129,6 +151,7 @@ fun AppNavigation(
                         1 -> navController.navigate(MembershipPlans(userId))
                         3 -> navController.navigate(Routines(userId))
                         4 -> { /* ya estamos */ }
+                        5 -> navController.navigate(Notifications(userId))
                     }
                 }
             )

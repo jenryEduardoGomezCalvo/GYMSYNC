@@ -8,7 +8,10 @@ import javax.inject.Singleton
 
 /**
  * UseCase para inicializar FCM después del login.
- * Obtiene el token FCM y lo guarda asociado al usuario.
+ * Obtiene el token FCM y lo envía al backend vía PATCH /users/{id}/fcm-token.
+ *
+ * NOTA: El registro del token en el backend es independiente del permiso
+ * POST_NOTIFICATIONS. El permiso solo controla si el OS muestra las notificaciones.
  */
 @Singleton
 class InitializeFcmUseCase @Inject constructor(
@@ -25,18 +28,16 @@ class InitializeFcmUseCase @Inject constructor(
      */
     suspend operator fun invoke(): Result<String> {
         return try {
-            // Verificar permisos primero
             if (!requestNotificationPermissionUseCase.hasNotificationPermission()) {
-                return Result.failure(Exception("No hay permiso de notificaciones"))
+                Log.w(TAG, "Permiso POST_NOTIFICATIONS no concedido — las notificaciones no se mostrarán en pantalla")
             }
 
-            // Obtener token FCM
+            // Obtener token FCM y enviarlo al backend
             val token = FirebaseMessaging.getInstance().token.await()
+            Log.d(TAG, "Token FCM obtenido: ${token.take(20)}...")
 
-            // Guardar token
             updateFcmTokenUseCase(token)
 
-            Log.d(TAG, "FCM inicializado correctamente. Token: $token")
             Result.success(token)
         } catch (e: Exception) {
             Log.e(TAG, "Error inicializando FCM", e)

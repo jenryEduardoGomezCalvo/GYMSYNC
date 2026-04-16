@@ -14,7 +14,8 @@ data class Client(
     val rolId: Int,
     val rolNombre: String,
     val gymId: Int?,
-    val gymNombre: String?
+    val gymNombre: String?,
+    val profileImage: String? = null
 ) {
     val nombreCompleto: String get() = "$nombres $apellidos"
     val inicial: String get() = nombres.firstOrNull()?.uppercase() ?: "?"

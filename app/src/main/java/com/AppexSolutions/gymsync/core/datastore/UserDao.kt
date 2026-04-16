@@ -46,4 +46,14 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE fcm_token IS NOT NULL LIMIT 1")
     suspend fun getUserWithFcmToken(): UserEntity?
+
+    @Query("UPDATE users SET receives_notifications = :enabled WHERE email = :email")
+    suspend fun updateReceivesNotifications(email: String, enabled: Boolean)
+
+    @Query("SELECT fcm_token FROM users WHERE receives_notifications = 1 AND fcm_token IS NOT NULL")
+    suspend fun getLocalBroadcastTokens(): List<String>
+
+    /** Usuario con sesión activa más reciente (heurística: token no vacío + último login). */
+    @Query("SELECT * FROM users WHERE token != '' ORDER BY last_login DESC LIMIT 1")
+    suspend fun getActiveUser(): UserEntity?
 }

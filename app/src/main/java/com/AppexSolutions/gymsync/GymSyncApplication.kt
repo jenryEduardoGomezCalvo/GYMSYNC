@@ -41,15 +41,27 @@ class GymSyncApplication : Application() {
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                RoutineNotificationReceiver.CHANNEL_ID,
-                "Rutinas de ejercicio",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Recordatorios de tus rutinas de ejercicio"
+            val manager = getSystemService(NotificationManager::class.java)
+
+            // Eliminar canal viejo "routines_channel" si aún existe (su importancia puede estar
+            // cacheada por el OS en IMPORTANCE_DEFAULT desde una versión anterior de la app)
+            if (manager.getNotificationChannel("routines_channel") != null) {
+                manager.deleteNotificationChannel("routines_channel")
             }
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
+
+            // Crear canal nuevo "routine_reminders_v2" con IMPORTANCE_HIGH garantizado
+            if (manager.getNotificationChannel(RoutineNotificationReceiver.CHANNEL_ID) == null) {
+                val channel = NotificationChannel(
+                    RoutineNotificationReceiver.CHANNEL_ID,
+                    "Rutinas de ejercicio",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Recordatorios de tus rutinas de entrenamiento"
+                    enableVibration(true)
+                    enableLights(true)
+                }
+                manager.createNotificationChannel(channel)
+            }
         }
     }
 }

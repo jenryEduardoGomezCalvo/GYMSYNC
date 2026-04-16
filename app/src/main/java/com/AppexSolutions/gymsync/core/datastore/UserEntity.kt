@@ -30,5 +30,12 @@ data class UserEntity(
     val lastLogin: Date = Date(),
 
     @ColumnInfo(name = "fcm_token")
-    val fcmToken: String? = null
+    val fcmToken: String? = null,
+
+    @ColumnInfo(name = "receives_notifications", defaultValue = "1")
+    val receivesNotifications: Boolean = true,
+
+    /** ID del usuario en el servidor (backend). Necesario para PATCH /users/{id}/fcm-token. */
+    @ColumnInfo(name = "backend_id", defaultValue = "0")
+    val backendId: Int = 0
 )

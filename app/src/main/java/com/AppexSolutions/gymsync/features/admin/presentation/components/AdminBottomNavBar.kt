@@ -2,6 +2,7 @@ package com.AppexSolutions.gymsync.features.admin.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
@@ -9,9 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 sealed class AdminTab(val index: Int, val label: String) {
-    object Dashboard : AdminTab(0, "Dashboard")
-    object Scanner   : AdminTab(1, "Escáner")
-    object Clients   : AdminTab(2, "Clientes")
+    object Dashboard    : AdminTab(0, "Dashboard")
+    object Scanner      : AdminTab(1, "Escáner")
+    object Clients      : AdminTab(2, "Clientes")
+    object Announcements: AdminTab(3, "Anuncios")
 }
 
 @Composable
@@ -54,6 +56,14 @@ fun AdminBottomNavBar(
             label = { Text("Clientes") },
             selected = selectedTab == AdminTab.Clients.index,
             onClick = { onTabSelected(AdminTab.Clients.index) },
+            colors = itemColors
+        )
+
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Campaign, contentDescription = "Anuncios") },
+            label = { Text("Anuncios") },
+            selected = selectedTab == AdminTab.Announcements.index,
+            onClick = { onTabSelected(AdminTab.Announcements.index) },
             colors = itemColors
         )
     }

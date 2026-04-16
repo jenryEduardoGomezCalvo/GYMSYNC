@@ -3,6 +3,7 @@ package com.AppexSolutions.gymsync.features.notifications.data.repository
 import android.util.Log
 import com.AppexSolutions.gymsync.core.datastore.UserDao
 import com.AppexSolutions.gymsync.core.network.GymSyncAPI
+import com.AppexSolutions.gymsync.features.notifications.data.remote.FcmTokenRequest
 import com.AppexSolutions.gymsync.features.notifications.domain.repository.FcmRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,24 +22,37 @@ class FcmRepositoryImpl @Inject constructor(
 
     override suspend fun updateFcmToken(token: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // Obtener usuario actual con token
-            val currentUser = userDao.getUserWithFcmToken()
+            val currentUser = userDao.getActiveUser()
                 ?: userDao.getLastBiometricUser()
                 ?: return@withContext Result.failure(
                     IllegalStateException("No hay usuario autenticado")
                 )
 
-            // Guardar localmente primero
+            // 1. Guardar token localmente
             userDao.updateFcmToken(currentUser.email, token)
+            Log.d(TAG, "Token FCM guardado localmente para: ${currentUser.email}")
 
-            // Enviar al backend (cuando tengas el endpoint)
-            // val response = api.updateFcmToken(
-            //     userId = currentUser.id,
-            //     token = token
-            // )
+            // 2. Enviar al backend via PATCH /users/{id}/fcm-token
+            val backendId = currentUser.backendId
+            if (backendId == 0) {
+                Log.w(TAG, "backendId es 0 — el token se guardó localmente pero no se envió al servidor")
+                return@withContext Result.failure(
+                    IllegalStateException("backendId no disponible, re-login requerido")
+                )
+            }
 
-            Log.d(TAG, "FCM Token actualizado para usuario: ${currentUser.email}")
-            Result.success(Unit)
+            val response = api.updateFcmToken(
+                userId = backendId,
+                body = FcmTokenRequest(fcmToken = token)
+            )
+
+            if (response.success) {
+                Log.d(TAG, "Token FCM registrado en backend para userId=$backendId: ${response.message}")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "Backend rechazó token FCM: ${response.message}")
+                Result.failure(Exception(response.message))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error actualizando FCM token", e)
             Result.failure(e)
@@ -47,17 +61,17 @@ class FcmRepositoryImpl @Inject constructor(
 
     override suspend fun saveFcmTokenLocally(token: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val currentUser = userDao.getUserWithFcmToken()
+            val currentUser = userDao.getActiveUser()
                 ?: userDao.getLastBiometricUser()
 
             currentUser?.let {
                 userDao.updateFcmToken(it.email, token)
-                Log.d(TAG, "FCM Token guardado localmente")
+                Log.d(TAG, "Token FCM guardado localmente para: ${it.email}")
             }
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error guardando FCM token", e)
+            Log.e(TAG, "Error guardando token FCM localmente", e)
             Result.failure(e)
         }
     }

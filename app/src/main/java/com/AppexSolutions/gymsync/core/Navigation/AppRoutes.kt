@@ -22,3 +22,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class ProgressDashboard(val userId: Int)
 @Serializable data class AddProgressEntry(val userId: Int)
 @Serializable data class ProgressHistory(val userId: Int)
+
+// Notifications (cliente)
+@Serializable data class Notifications(val clientId: Int)
