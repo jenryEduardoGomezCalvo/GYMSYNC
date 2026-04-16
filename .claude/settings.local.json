@@ -16,7 +16,8 @@
       "Bash(.\\\\gradlew.bat assembleDebug:*)",
       "Bash(cmd /c \"gradlew.bat assembleDebug 2>&1\")",
       "Bash(cmd /c \"gradlew.bat assembleDebug 2>&1 | findstr /i \"\"BUILD error Error:\"\"\")",
-      "Bash(./gradlew.bat assembleDebug:*)"
+      "Bash(./gradlew.bat assembleDebug:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
